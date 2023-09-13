@@ -10,12 +10,12 @@
 #define M_PI 3.14159265358979323846
 
 enum {
-    VOID = 0,
-    INTEGER = 1,
-    UNSIGNED = 2,
-    FLOAT = 3,
-    CHAR = 4,
-    STRING = 5
+	SIGNED = 0,
+	INTEGER = 1,
+	UNSIGNED = 2,
+	FLOAT = 3,
+	CHAR = 4,
+	STRING = 5
 };
 
 typedef void                   v64;
@@ -33,17 +33,25 @@ typedef char *                 s64;
 #define s64(vec) ((s64 *) vec.x)
 
 typedef struct {
-    u64 type;
-    u64 len;
-    void *x;
+	u64 type;
+	u64 len;
+	void *x;
 } vec;
 
 typedef struct {
-    u64 nrow;
-    u64 ncol;
-    vec colnames;
-    vec *var;
+	u64 nrow;
+	u64 ncol;
+	vec colnames;
+	vec *var;
 } df;
+
+vec vec_new(u64 type, u64 n);
+vec vec_fill(vec x, f64 value);
+vec vec_seq(vec x, f64 start, f64 by);
+
+u64 all(vec);
+u64 any(vec);
+vec which(vec x, s64 op, f64 value);
 
 void rinit(u64 seed);
 vec runif(u64 n, f64 min, f64 max);
@@ -75,8 +83,8 @@ f64 cor(vec x1, vec x2);
 void print_vec(vec x);
 void print_df(df data);
 
-df read_df(char *path, u64 nrow, u64 ncol, char *colspec);
+df read_df(s64 path, u64 nrow, u64 ncol, s64 colspec);
 
-void write_vec(vec x, char *path);
+void write_vec(vec x, s64 path);
 
 #endif // KEK_H_
