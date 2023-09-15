@@ -3,17 +3,7 @@
 f64 sum(vec x) {
 	f64 sum = 0;
 	for (u64 i = 0; i < x.len; i++) {
-		switch (x.type) {
-		case SIGNED:
-			sum += i64(x)[i];
-			break;
-		case UNSIGNED:
-			sum += u64(x)[i];
-			break;
-		case FLOAT:
-			sum += f64(x)[i];
-			break;
-		}
+		sum += x.x[i];
 	}
 	return sum;
 }
@@ -25,17 +15,7 @@ f64 mean(vec x) {
 f64 sumprod(vec x1, vec x2) {
 	f64 sum = 0;
 	for (u64 i = 0; i < x1.len; i++) {
-		switch (x1.type) {
-		case SIGNED:
-			sum += i64(x1)[i] * i64(x2)[i];
-			break;
-		case UNSIGNED:
-			sum += u64(x1)[i] * u64(x2)[i];
-			break;
-		case FLOAT:
-			sum += f64(x1)[i] * f64(x2)[i];
-			break;
-		}
+		sum += x1.x[i] * x2.x[i];
 	}
 	return sum;
 }

@@ -1,103 +1,45 @@
 #include "../kek.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-vec vec_new(u64 type, u64 n) {
-	u64 size = 0;
-	switch (type) {
-	case SIGNED:
-		size = sizeof(i64);
-		break;
-	case UNSIGNED:
-		size = sizeof(u64);
-		break;
-	case FLOAT:
-		size = sizeof(f64);
-		break;
-	case CHAR:
-		size = sizeof(c64);
-		break;
-	case STRING:
-		size = sizeof(s64);
-		break;
-	}
-	void *x = malloc(n * size);
-	return (vec) {type, n, x};
+vec vec_new(u64 n) {
+	f64 *x = malloc(n * sizeof *x);
+	return (vec) {n, x};
 }
 
 void vec_free(vec x) {
 	free(x.x);
 }
 
-vec vec_fill(vec x, f64 value) {
+vec vec_fill(u64 n, f64 value) {
+	vec x = vec_new(n);
 	for (u64 i = 0; i < x.len; i++) {
-		switch (x.type) {
-		case SIGNED:
-			i64(x)[i] = value;
-		 	break;
-		case UNSIGNED:
-			u64(x)[i] = value;
-			break;
-		case FLOAT:
-			f64(x)[i] = value;
-			break;
-		case CHAR:
-			c64(x)[i] = value;
-			break;
-		}
+		x.x[i] = value;
 	}
 	return x;
 }
 
-vec vec_seq(vec x, f64 start, f64 by) {
+vec vec_seq(u64 n, f64 start, f64 by) {
+	vec x = vec_new(n);
 	for (u64 i = 0; i < x.len; i++) {
-		switch (x.type) {
-		case SIGNED:
-			i64(x)[i] = start + by * i;
-		 	break;
-		case UNSIGNED:
-			u64(x)[i] = start + by * i;
-			break;
-		case FLOAT:
-			f64(x)[i] = start + by * i;
-			break;
-		}
+		x.x[i] = start + by * i;
 	}
 	return x;
 }
 
 vec vec_combine(vec x, vec y) {
-	vec z = vec_new(FLOAT, x.len + y.len);
-
+	vec z = vec_new(x.len + y.len);
+	for (u64 i = 0; i < x.len; i++) {
+		z.x[i] = x.x[i];
+	}
+	for (u64 i = 0; i < y.len; i++) {
+		z.x[x.len + i] = y.x[i];
+	}
 	return z;
 }
 
 vec vec_add(vec x, vec y) {
-	vec z = vec_new(FLOAT, x.len);
+	vec z = vec_new(x.len);
 	for (u64 i = 0; i < x.len; i++) {
-		switch (x.type) {
-		case SIGNED:
-			f64(z)[i] = i64(x)[i];
-		 	break;
-		case UNSIGNED:
-			f64(z)[i] = u64(x)[i];
-			break;
-		case FLOAT:
-			f64(z)[i] = f64(x)[i];
-			break;
-		}
-		switch (y.type) {
-		case SIGNED:
-			f64(z)[i] += i64(y)[i];
-		 	break;
-		case UNSIGNED:
-			f64(z)[i] += u64(y)[i];
-			break;
-		case FLOAT:
-			f64(z)[i] += f64(y)[i];
-			break;
-		}
+		z.x[i] = x.x[i] + y.x[i];
 	}
 	return z;
 }

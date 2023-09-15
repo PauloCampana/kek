@@ -1,50 +1,19 @@
 #include "../kek.h"
 
-df read_df(s64 path, u64 nrow, u64 ncol, s64 colspec) {
+df read_df(s64 path, u64 nrow, u64 ncol) {
 	FILE *csv = fopen(path, "r");
-	vec colnames = {STRING, ncol, malloc(ncol * sizeof colnames.x)};
+	s64 *colnames = malloc(ncol * sizeof *colnames);
 	vec *var = malloc(ncol * sizeof *var);
-	u64 *coltypes = malloc(strlen(colspec) * sizeof *coltypes);
-	for (u64 i = 0; i < strlen(colspec); i++) {
-		switch (colspec[i]) {
-		case 'i':
-			coltypes[i] = SIGNED;
-			break;
-		case 'u':
-			coltypes[i] = UNSIGNED;
-			break;
-		case 'f':
-			coltypes[i] = FLOAT;
-			break;
-		case 's':
-			coltypes[i] = STRING;
-			break;
-		}
-	}
+
 	for (u64 j = 0; j < ncol; j++) {
-		var[j] = (vec) {coltypes[j], nrow, malloc(nrow * sizeof var[j].x)};
-		s64(colnames)[j] = malloc(64);
-		u64 signal = fscanf(csv, "\n%[^,;\t\n],", s64(colnames)[j]);
+		var[j] = (vec) {nrow, malloc(nrow * sizeof var[j].x)};
+		colnames[j] = malloc(64);
+		u64 signal = fscanf(csv, "\n%[^,;\t\n],", colnames[j]);
 		if (signal != 1) exit(1);
 	}
 	for (u64 i = 0; i < nrow; i++) {
 		for (u64 j = 0; j < ncol; j++) {
-			u64 signal;
-			switch(var[j].type) {
-			case SIGNED:
-				signal = fscanf(csv, "%lli,", &i64(var[j])[i]);
-				break;
-			case UNSIGNED:
-				signal = fscanf(csv, "%llu,", &u64(var[j])[i]);
-				break;
-			case FLOAT:
-				signal = fscanf(csv, "%lf,", &f64(var[j])[i]);
-				break;
-			case STRING:
-				s64(var[j])[i] = malloc(64 * sizeof s64(var[j])[i]);
-				signal = fscanf(csv, "\n%[^,;\t\n],", s64(var[j])[i]);
-				break;
-			}
+			u64 signal = fscanf(csv, "%lf,", &var[j].x[i]);
 			if (signal != 1) exit(1);
 		}
 	}

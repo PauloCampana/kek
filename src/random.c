@@ -1,4 +1,7 @@
 #include "../kek.h"
+#include <stdio.h>
+
+// https://prng.di.unimi.it/
 
 static u64 _seedseed = 0;
 static u64 _seed[4] = {0};
@@ -23,7 +26,6 @@ void rinit(u64 seed) {
 	_seed[3] = splitmix64();
 }
 
-
 u64 rotl(u64 x, u64 k) {return (x << k) | (x >> (64 - k));}
 u64 xoshiro256starstar(void) {
 	u64 result = rotl(_seed[1] * 5, 7) * 9;
@@ -37,6 +39,30 @@ u64 xoshiro256starstar(void) {
 	return result;
 }
 
+void xoshiro256starstarjump(void) {
+	u64 JUMP[] = {
+		0x180ec6d33cfd0aba,
+		0xd5a61266f0c9392c,
+		0xa9582618e03fc9aa,
+		0x39abdc4529b1661c
+	};
+	u64 s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+	for (u64 i = 0; i < sizeof JUMP / sizeof *JUMP; i++)
+		for (u64 b = 0; b < 64; b++) {
+			if (JUMP[i] & 1ull << b) {
+				s0 ^= _seed[0];
+				s1 ^= _seed[1];
+				s2 ^= _seed[2];
+				s3 ^= _seed[3];
+			}
+			xoshiro256starstar();
+		}
+	_seed[0] = s0;
+	_seed[1] = s1;
+	_seed[2] = s2;
+	_seed[3] = s3;
+}
+
 // Xorshift: Uniform ---------------------------------------------------------
 
 vec runif(u64 n, f64 min, f64 max) {
@@ -46,7 +72,7 @@ vec runif(u64 n, f64 min, f64 max) {
 		f64 u01 = (xoshiro256starstar() >> 11) * 0x1.0p-53;
 		u[i] = min + (max - min) * u01;
 	}
-	return (vec) {FLOAT, n, u};
+	return (vec) {n, u};
 }
 
 // Discrete inversion: Bernoulli, Geometric, Poisson -------------------------
@@ -54,63 +80,61 @@ vec runif(u64 n, f64 min, f64 max) {
 vec rber(u64 n, f64 prob) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
-		u64(x)[i] = f64(x)[i] < prob;
+		x.x[i] = x.x[i] < prob;
 	}
-	x.type = UNSIGNED;
 	return x;
 }
 
 vec rgeom(u64 n, f64 prob) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
-		u64(x)[i] = log(f64(x)[i]) / log1p(-prob);
+		x.x[i] = ceil(log(x.x[i]) / log1p(-prob));
 	}
-	x.type = UNSIGNED;
 	return x;
 }
 
 vec rpois(u64 n, f64 lambda) {
-	u64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof *x);
 	vec u = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
 		f64 p = exp(-lambda);
 		f64 F = p;
 		u64 j = 0;
-		for (j = 0; f64(u)[i] >= F; j++) {
+		for (j = 0; u.x[i] >= F; j++) {
 			p *= lambda / (j + 1);
 			F += p;
 		}
 		x[i] = j;
 	}
-	return (vec) {UNSIGNED, n, x};
+	return (vec) {n, x};
 }
 
 // Relation to Bernoulli/Geometric: Binomial, Negative binomial --------------
 
 vec rbinom(u64 n, u64 size, f64 prob) {
-	u64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof *x);
 	for (u64 i = 0; i < n; i++) {
 		vec u = runif(size, 0, 1);
 		x[i] = 0;
 		for (u64 j = 0; j < size; j++) {
-			x[i] += f64(u)[j] < prob;
+			x[i] += u.x[j] < prob;
 		}
-		free(f64(u));
+		free(u.x);
 	}
-	return (vec) {UNSIGNED, n, x};
+	return (vec) {n, x};
 }
 
 vec rnbinom(u64 n, u64 size, f64 prob) {
-	u64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof *x);
 	for (u64 i = 0; i < n; i++) {
 		vec g = rgeom(size, prob);
 		x[i] = 0;
 		for (u64 j = 0; j < size; j++) {
-			x[i] += u64(g)[j];
+			x[i] += g.x[j];
 		}
-		free(u64(g));
+		free(g.x);
 	}
-	return (vec) {UNSIGNED, n, x};
+	return (vec) {n, x};
 }
 
 // Continuous inversion: Exponential, Weibull, Cauchy, Logistic --------------
@@ -118,7 +142,7 @@ vec rnbinom(u64 n, u64 size, f64 prob) {
 vec rexp(u64 n, f64 rate) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
-		f64(x)[i] = log(f64(x)[i]) / -rate;
+		x.x[i] = log(x.x[i]) / -rate;
 	};
 	return x;
 }
@@ -126,7 +150,7 @@ vec rexp(u64 n, f64 rate) {
 vec rweibull(u64 n, f64 shape, f64 rate) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
-		f64(x)[i] = pow(-log(f64(x)[i]), 1 / shape) / rate;
+		x.x[i] = pow(-log(x.x[i]), 1 / shape) / rate;
 		// f64(x)[i] = exp(log(-log(f64(x)[i])) / shape) / rate;
 	}
 	return x;
@@ -135,7 +159,7 @@ vec rweibull(u64 n, f64 shape, f64 rate) {
 vec rcauchy(u64 n, f64 location, f64 scale) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
-		f64(x)[i] = location + scale * tan(M_PI * f64(x)[i]);
+		x.x[i] = location + scale * tan(M_PI * x.x[i]);
 	}
 	return x;
 }
@@ -143,7 +167,7 @@ vec rcauchy(u64 n, f64 location, f64 scale) {
 vec rlogis(u64 n, f64 location, f64 scale) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
-		f64(x)[i] = location + scale * log(f64(x)[i] / (1 - f64(x)[i]));
+		x.x[i] = location + scale * log(x.x[i] / (1 - x.x[i]));
 	}
 	return x;
 }
@@ -156,12 +180,12 @@ vec rgamma(u64 n, u64 shape, f64 rate) {
 		vec u = runif(shape, 0, 1);
 		x[i] = 0;
 		for (u64 j = 0; j < shape; j++) {
-			x[i] -= log(f64(u)[j]);
+			x[i] -= log(u.x[j]);
 		}
 		x[i] /= rate;
-		free(f64(u));
+		free(u.x);
 	}
-	return (vec) {FLOAT, n, x};
+	return (vec) {n, x};
 }
 
 vec rchisq(u64 n, u64 df) {
@@ -170,26 +194,26 @@ vec rchisq(u64 n, u64 df) {
 		vec u = runif(df / 2, 0, 1);
 		x[i] = 0;
 		for (u64 j = 0; j < df / 2; j++) {
-			x[i] -= log(f64(u)[j]);
+			x[i] -= log(u.x[j]);
 		}
 		x[i] *= 2;
-		free(f64(u));
+		free(u.x);
 	}
 	if (df % 2 == 1) {
 		vec z = rnorm(n, 0, 1);
 		for (u64 i = 0; i < n; i++) {
-			x[i] += f64(z)[i] * f64(z)[i];
+			x[i] += z.x[i] * z.x[i];
 		}
-		free(f64(z));
+		free(z.x);
 	}
-	return (vec) {FLOAT, n, x};
+	return (vec) {n, x};
 }
 
 vec rf(u64 n, u64 df1, u64 df2) {
 	vec x = rchisq(n, df1);
 	vec c = rchisq(n, df2);
 	for (u64 i = 0; i < n; i++) {
-		f64(x)[i] /= f64(c)[i] * df1 / df2;
+		x.x[i] /= c.x[i] * df1 / df2;
 	}
 	return x;
 }
@@ -200,16 +224,16 @@ vec rbeta(u64 n, u64 shape1, u64 shape2) {
 		vec u = runif(shape1 + shape2, 0, 1);
 		f64 num = 0;
 		for(u64 j = 0; j < shape1; j++) {
-			num -= log(f64(u)[j]);
+			num -= log(u.x[j]);
 		}
 		f64 den = num;
 		for(u64 j = shape1; j < shape1 + shape2; j++) {
-			den -= log(f64(u)[j]);
+			den -= log(u.x[j]);
 		}
 		x[i] = num / den;
-		free(f64(u));
+		free(u.x);
 	}
-	return (vec) {FLOAT, n, x};
+	return (vec) {n, x};
 }
 
 // Box Muller: Normal --------------------------------------------------------
@@ -218,13 +242,13 @@ vec rnorm(u64 n, f64 mean, f64 sd) {
 	f64 *x = malloc(n * sizeof *x);
 	vec u = runif(n + 1, 0, 1);
 	for (u64 i = 0; i < n; i += 2) {
-		f64 R = sd * sqrt(-2 * log(f64(u)[i]));
-		f64 theta = 2 * M_PI * f64(u)[i + 1];
+		f64 R = sd * sqrt(-2 * log(u.x[i]));
+		f64 theta = 2 * M_PI * u.x[i + 1];
 		x[i] = mean + R * sin(theta);
 		if (i + 1 == n) break;
 		x[i + 1] = mean + R * cos(theta);
 	}
-	return (vec) {FLOAT, n, x};
+	return (vec) {n, x};
 }
 
 // Relation to Normal: Log normal, T -----------------------------------------
@@ -232,7 +256,7 @@ vec rnorm(u64 n, f64 mean, f64 sd) {
 vec rlnorm(u64 n, f64 meanlog, f64 sdlog) {
 	vec x = rnorm(n, meanlog, sdlog);
 	for (u64 i = 0; i < n; i++) {
-		f64(x)[i] = exp(f64(x)[i]);
+		x.x[i] = exp(x.x[i]);
 	}
 	return x;
 }
@@ -242,7 +266,7 @@ vec rt(u64 n, u64 df) {
 	vec x = rnorm(n, 0, 1);
 	vec c = rchisq(n, df);
 	for (u64 i = 0; i < n; i++) {
-		f64(x)[i] *= sqrt(df / f64(c)[i]);
+		x.x[i] *= sqrt(df / c.x[i]);
 	}
 	return x;
 }
@@ -252,7 +276,7 @@ vec rt(u64 n, u64 df) {
  * Poisson is O(n * lambda)
  * Binomial and Negative binomial are O(n * size)
  * No Hypergeometric
- * Gamma, Betam Chi-squared, F and t need integer shape and df parameters
+ * Gamma, Beta, Chi-squared, F and t need integer shape and df parameters
  *     Gamma       O(n * shape)
  *     Beta        O(n * (shape1 + shape2))
  *     Chi-squared O(n * df)
