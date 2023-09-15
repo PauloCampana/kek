@@ -1,4 +1,5 @@
 #include "../kek.h"
+#include <stdlib.h>
 
 u64 all(vec x) {
 	for (u64 i = 0; i < x.len; i++) {
