@@ -1,40 +1,18 @@
-OBJECTS =                                    \
-	obj/vec.o obj/basic.o obj/random.o       \
-	obj/basicstat.o obj/print.o obj/read.o   \
-	obj/write.o
+SOURCES := $(wildcard src/*.c)
+OBJECTS := $(SOURCES:src/%.c=obj/%.o)
 COMPILER = gcc
-FLAGS = -O3 -Wall -Wextra -pedantic -std=c2x
+FLAGS = -std=c2x -Wall -Wextra -pedantic -O3
 LIBS = -lm -lpthread
 
-run: bin
-	mkdir -p obj
-	./bin
+run: obj/_main
+	@./obj/_main
 
-bin: main.c kek.h $(OBJECTS)
-	$(COMPILER) $(FLAGS) main.c -o bin $(OBJECTS) $(LIBS)
+obj/_main: main.c kek.h $(OBJECTS)
+	@$(COMPILER) $(FLAGS) $< -o $@ $(OBJECTS) $(LIBS)
 
-obj/vec.o: src/vec.c kek.h
-	mkdir -p obj
-	$(COMPILER) $(FLAGS) -c src/vec.c -o obj/vec.o
-
-obj/basic.o: src/basic.c kek.h
-	$(COMPILER) $(FLAGS) -c src/basic.c -o obj/basic.o
-
-obj/random.o: src/random.c kek.h
-	$(COMPILER) $(FLAGS) -c src/random.c -o obj/random.o
-
-obj/basicstat.o: src/basicstat.c kek.h
-	$(COMPILER) $(FLAGS) -c src/basicstat.c -o obj/basicstat.o
-
-obj/print.o: src/print.c kek.h
-	$(COMPILER) $(FLAGS) -c src/print.c -o obj/print.o
-
-obj/read.o: src/read.c kek.h
-	$(COMPILER) $(FLAGS) -c src/read.c -o obj/read.o
-
-obj/write.o: src/write.c kek.h
-	$(COMPILER) $(FLAGS) -c src/write.c -o obj/write.o
+$(OBJECTS): obj/%.o : src/%.c kek.h
+	@$(COMPILER) $(FLAGS) -c $< -o $@
 
 clean:
-	rm -rf obj
-	rm bin
+	@rm obj/*.o
+	@rm obj/_main

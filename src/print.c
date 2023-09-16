@@ -8,7 +8,7 @@ void print_vec(vec x) {
 	f64 whole = 0;
 	for (u64 i = 0; i < max; i++) {
 		oom += log10(fabs(x.x[i]));
-		whole += x.x[i] == ceil(x.x[i]);
+		whole += x.x[i] == round(x.x[i]);
 	}
 	oom /= max;
 	s64 format;

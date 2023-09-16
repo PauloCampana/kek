@@ -9,6 +9,9 @@
 #include <threads.h>
 
 #define M_PI 3.14159265358979323846
+#define M_SQRT2 1.41421356237309504880
+#define M_SQRT2PI 2.50662827463100050241
+
 
 typedef signed   long long int i64;
 typedef unsigned long long int u64;
@@ -33,7 +36,10 @@ void vec_free(vec x);
 vec vec_fill(u64 n, f64 value);
 vec vec_seq(u64 n, f64 start, f64 by);
 vec vec_combine(vec x, vec y);
+vec vec_subtract(vec x, vec y);
 vec vec_add(vec x, vec y);
+vec vec_multiply(vec x, vec y);
+vec vec_divide(vec x, vec y);
 
 u64 all(vec);
 u64 any(vec);
@@ -57,6 +63,42 @@ vec rbeta(u64 n, u64 shape1, u64 shape2);
 vec rnorm(u64 n, f64 mean, f64 sd);
 vec rlnorm(u64 n, f64 meanlog, f64 sdlog);
 vec rt(u64 n, u64 df);
+
+f64 dunif(f64 x, f64 min, f64 max);
+f64 dber(f64 x, f64 prob);
+f64 dgeom(f64 x, f64 prob);
+f64 dpois(f64 x, f64 lambda);
+f64 dbinom(f64 x, u64 size, f64 prob);
+f64 dnbinom(f64 x, u64 size, f64 prob);
+f64 dexp(f64 x, f64 rate);
+f64 dweibull(f64 x, f64 shape, f64 rate);
+f64 dcauchy(f64 x, f64 location, f64 scale);
+f64 dlogis(f64 x, f64 location, f64 scale);
+f64 dgamma(f64 x, f64 shape, f64 rate);
+f64 dchisq(f64 x, f64 df);
+f64 dF(f64 x, f64 df1, f64 df2);
+f64 dbeta(f64 x, f64 shape1, f64 shape2);
+f64 dnorm(f64 x, f64 mean, f64 sd);
+f64 dlnorm(f64 x, f64 meanlog, f64 sdlog);
+f64 dt(f64 x, f64 df);
+
+f64 punif(f64 x, f64 min, f64 max);
+f64 pber(f64 x, f64 prob);
+f64 pgeom(f64 x, f64 prob);
+f64 ppois(f64 x, f64 lambda);
+f64 pbinom(f64 x, u64 size, f64 prob);
+f64 pnbinom(f64 x, u64 size, f64 prob);
+f64 pexp(f64 x, f64 rate);
+f64 pweibull(f64 x, f64 shape, f64 rate);
+f64 pcauchy(f64 x, f64 location, f64 scale);
+f64 plogis(f64 x, f64 location, f64 scale);
+f64 pgamma(f64 x, f64 shape, f64 rate);
+f64 pchisq(f64 x, f64 df);
+f64 pF(f64 x, f64 df1, f64 df2);
+f64 pbeta(f64 x, f64 shape1, f64 shape2);
+f64 pnorm(f64 x, f64 mean, f64 sd);
+f64 plnorm(f64 x, f64 meanlog, f64 sdlog);
+f64 pt(f64 x, f64 df);
 
 f64 sum(vec x);
 f64 mean(vec x);

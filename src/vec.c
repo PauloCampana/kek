@@ -43,3 +43,27 @@ vec vec_add(vec x, vec y) {
 	}
 	return z;
 }
+
+vec vec_subtract(vec x, vec y) {
+	vec z = vec_new(x.len);
+	for (u64 i = 0; i < x.len; i++) {
+		z.x[i] = x.x[i] - y.x[i];
+	}
+	return z;
+}
+
+vec vec_multiply(vec x, vec y) {
+	vec z = vec_new(x.len);
+	for (u64 i = 0; i < x.len; i++) {
+		z.x[i] = x.x[i] * y.x[i];
+	}
+	return z;
+}
+
+vec vec_divide(vec x, vec y) {
+	vec z = vec_new(x.len);
+	for (u64 i = 0; i < x.len; i++) {
+		z.x[i] = x.x[i] / y.x[i];
+	}
+	return z;
+}

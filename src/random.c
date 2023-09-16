@@ -1,5 +1,5 @@
 #include "../kek.h"
-#include <stdio.h>
+#include <math.h>
 
 // https://prng.di.unimi.it/
 
@@ -88,7 +88,7 @@ vec rber(u64 n, f64 prob) {
 vec rgeom(u64 n, f64 prob) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
-		x.x[i] = ceil(log(x.x[i]) / log1p(-prob));
+		x.x[i] = floor(log(x.x[i]) / log1p(-prob));
 	}
 	return x;
 }
