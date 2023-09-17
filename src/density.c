@@ -1,6 +1,4 @@
 #include "../kek.h"
-#include <bits/types/cookie_io_functions_t.h>
-#include <math.h>
 
 f64 dunif(f64 x, f64 min, f64 max) {
 	if (x < min || x > max) return 0;

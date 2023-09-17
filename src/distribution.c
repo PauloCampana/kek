@@ -1,5 +1,4 @@
 #include "../kek.h"
-#include <math.h>
 
 f64 punif(f64 x, f64 min, f64 max) {
 	if (x <= min) return 0;
@@ -21,33 +20,24 @@ f64 pgeom(f64 x, f64 prob) {
 
 f64 ppois(f64 x, f64 lambda) {
 	if (x < 0) return 0;
-	f64 sum = 0;
+	f64 sum = 0, li = 1, gam = 1;
 	for (u64 i = 0; i <= floor(x); i++) {
-		sum += dpois(i, lambda);
+		sum += li / gam;
+		li *= lambda;
+		gam *= i + 1;
 	}
-	// return pgamma(lambda, floor(x) + 1, 1)
-	return sum;
+	return exp(-lambda) * sum;
 }
 
 f64 pbinom(f64 x, u64 size, f64 prob) {
 	if (x <  0) return 0;
 	if (x >= size) return 1;
-	f64 sum = 0;
-	for (u64 i = 0; i <= floor(x); i++) {
-		sum += dbinom(i, size, prob);
-	}
-	// return pbeta(prob, floor(x) + 1, size - x);
-	return sum;
+	return 1 - pbeta(prob, floor(x) + 1, size - floor(x));
 }
 
 f64 pnbinom(f64 x, u64 size, f64 prob) {
 	if (x < 0) return 0;
-	f64 sum = 0;
-	for (u64 i = 0; i <= floor(x); i++) {
-		sum += dnbinom(i, size, prob);
-	}
-	// return pbeta(prob, size, floor(x) + 1);
-	return sum;
+	return pbeta(prob, size, floor(x) + 1);
 }
 
 f64 pexp(f64 x, f64 rate) {
@@ -72,9 +62,15 @@ f64 plogis(f64 x, f64 location, f64 scale) {
 
 f64 pgamma(f64 x, f64 shape, f64 rate) {
 	if (x <= 0) return 0;
-	(void) shape; (void) rate;
-	// TODO
-	return 0;
+	x *= rate;
+	f64 sum = 0, xi = 1, gam = tgamma(shape + 1);
+	for (u64 i = 0; i < 100; i++) {
+		sum += xi / gam;
+		xi *= x;
+		gam *= shape + 1 + i;
+	}
+	f64 tmp = shape * log(x) - x + log(sum);
+	return exp(tmp);
 }
 
 f64 pchisq(f64 x, f64 df) {
@@ -88,14 +84,26 @@ f64 pF(f64 x, f64 df1, f64 df2) {
 f64 pbeta(f64 x, f64 shape1, f64 shape2) {
 	if (x <= 0) return 0;
 	if (x >= 1) return 1;
-	(void) shape1; (void) shape2;
-	// TODO
-	return 0;
+	f64 num, den, current = 0;
+	for (u64 i = 15; i >= 1; i--) {
+		u64 m = i / 2;
+		if (i % 2 == 0) {
+			num = m * (shape2 - m) * x;
+			den = (shape1 + 2 * m - 1) * (shape1 + 2 * m);
+		} else {
+			num = -(shape1 + m) * (shape1 + shape2 + m) * x;
+			den = (shape1 + 2 * m + 1) * (shape1 + 2 * m);
+		}
+		current = num / den / (1 + current);
+	}
+	f64 beta = lgamma(shape1) + lgamma(shape2) - lgamma(shape1 + shape2);
+	f64 tmp = shape1 * log(x) + shape2 * log(1 - x) - beta;
+	return exp(tmp) / shape1 / (1 + current);
 }
 
 f64 pnorm(f64 x, f64 mean, f64 sd) {
 	x = (x - mean) / sd;
-	return 0.5 * erfc(-x / M_SQRT2);
+	return erfc(-x / M_SQRT2) / 2;
 }
 
 f64 plnorm(f64 x, f64 meanlog, f64 sdlog) {
@@ -104,7 +112,7 @@ f64 plnorm(f64 x, f64 meanlog, f64 sdlog) {
 }
 
 f64 pt(f64 x, f64 df) {
-	(void) x; (void) df;
-	// TODO
-	return 0;
+	f64 den = df + x * x;
+	f64 tmp = pbeta(df / den, df / 2, 0.5) / 2;
+	return x <= 0 ? tmp : 1 - tmp;
 }
