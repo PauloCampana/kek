@@ -1,13 +1,12 @@
 #include "../kek.h"
-#include <math.h>
 
 // https://prng.di.unimi.it/
 
-static u64 _seedseed = 0;
-static u64 _seed[4] = {0};
+thread_local u64 kek_seedseed = 0;
+thread_local u64 kek_seed[4] = {0};
 
 u64 splitmix64() {
-	u64 z = (_seedseed += 0x9e3779b97f4a7c15);
+	u64 z = (kek_seedseed += 0x9e3779b97f4a7c15);
 	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
 	z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
 	return z ^ (z >> 31);
@@ -17,29 +16,29 @@ void rinit(u64 seed) {
 	if (seed == 0) {
 		struct timespec time;
 		timespec_get(&time, TIME_UTC);
-		_seedseed = time.tv_nsec;
+		kek_seedseed = time.tv_nsec;
 	}
-	else _seedseed = seed;
-	_seed[0] = splitmix64();
-	_seed[1] = splitmix64();
-	_seed[2] = splitmix64();
-	_seed[3] = splitmix64();
+	else kek_seedseed = seed;
+	kek_seed[0] = splitmix64();
+	kek_seed[1] = splitmix64();
+	kek_seed[2] = splitmix64();
+	kek_seed[3] = splitmix64();
 }
 
 u64 rotl(u64 x, u64 k) {return (x << k) | (x >> (64 - k));}
 u64 xoshiro256starstar(void) {
-	u64 result = rotl(_seed[1] * 5, 7) * 9;
-	u64 t = _seed[1] << 17;
-	_seed[2] ^= _seed[0];
-	_seed[3] ^= _seed[1];
-	_seed[1] ^= _seed[2];
-	_seed[0] ^= _seed[3];
-	_seed[2] ^= t;
-	_seed[3] = rotl(_seed[3], 45);
+	u64 result = rotl(kek_seed[1] * 5, 7) * 9;
+	u64 t = kek_seed[1] << 17;
+	kek_seed[2] ^= kek_seed[0];
+	kek_seed[3] ^= kek_seed[1];
+	kek_seed[1] ^= kek_seed[2];
+	kek_seed[0] ^= kek_seed[3];
+	kek_seed[2] ^= t;
+	kek_seed[3] = rotl(kek_seed[3], 45);
 	return result;
 }
 
-void xoshiro256starstarjump(void) {
+void rjump(void) {
 	u64 JUMP[] = {
 		0x180ec6d33cfd0aba,
 		0xd5a61266f0c9392c,
@@ -47,26 +46,27 @@ void xoshiro256starstarjump(void) {
 		0x39abdc4529b1661c
 	};
 	u64 s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-	for (u64 i = 0; i < sizeof JUMP / sizeof *JUMP; i++)
+	for (u64 i = 0; i < sizeof JUMP / sizeof *JUMP; i++) {
 		for (u64 b = 0; b < 64; b++) {
 			if (JUMP[i] & 1ull << b) {
-				s0 ^= _seed[0];
-				s1 ^= _seed[1];
-				s2 ^= _seed[2];
-				s3 ^= _seed[3];
+				s0 ^= kek_seed[0];
+				s1 ^= kek_seed[1];
+				s2 ^= kek_seed[2];
+				s3 ^= kek_seed[3];
 			}
 			xoshiro256starstar();
 		}
-	_seed[0] = s0;
-	_seed[1] = s1;
-	_seed[2] = s2;
-	_seed[3] = s3;
+	}
+	kek_seed[0] = s0;
+	kek_seed[1] = s1;
+	kek_seed[2] = s2;
+	kek_seed[3] = s3;
 }
 
 // Xorshift: Uniform ---------------------------------------------------------
 
 vec runif(u64 n, f64 min, f64 max) {
-	if (_seed[0] == 0) rinit(0);
+	if (kek_seed[0] == 0) rinit(0);
 	f64 *u = malloc(n * sizeof *u);
 	for (u64 i = 0; i < n; i++) {
 		f64 u01 = (xoshiro256starstar() >> 11) * 0x1.0p-53;
@@ -151,7 +151,6 @@ vec rweibull(u64 n, f64 shape, f64 rate) {
 	vec x = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
 		x.x[i] = pow(-log(x.x[i]), 1 / shape) / rate;
-		// f64(x)[i] = exp(log(-log(f64(x)[i])) / shape) / rate;
 	}
 	return x;
 }
@@ -223,11 +222,11 @@ vec rbeta(u64 n, u64 shape1, u64 shape2) {
 	for (u64 i = 0; i < n; i++) {
 		vec u = runif(shape1 + shape2, 0, 1);
 		f64 num = 0;
-		for(u64 j = 0; j < shape1; j++) {
+		for (u64 j = 0; j < shape1; j++) {
 			num -= log(u.x[j]);
 		}
 		f64 den = num;
-		for(u64 j = shape1; j < shape1 + shape2; j++) {
+		for (u64 j = shape1; j < shape1 + shape2; j++) {
 			den -= log(u.x[j]);
 		}
 		x[i] = num / den;

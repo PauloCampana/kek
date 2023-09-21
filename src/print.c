@@ -43,7 +43,7 @@ void print_df(df data) {
 	}
 	printf("\n");
 	for (u64 i = 0; i < max; i++) {
-		for(u64 j = 0; j < data.ncol; j++) {
+		for (u64 j = 0; j < data.ncol; j++) {
 			printf("%15.3lf", data.var[j].x[i]);
 		}
 		printf("\n");
