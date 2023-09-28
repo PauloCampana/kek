@@ -12,7 +12,7 @@ void write_vec(vec x, s64 path) {
 void write_mat(mat x, s64 path) {
 	FILE *csv = fopen(path, "w");
 	for (u64 j = 0; j < x.len; j++) {
-		fprintf(csv, "%s,", x.names[j]);
+		fprintf(csv, "%s,", x.colnames[j]);
 	}
 	fputs("\n", csv);
 	for (u64 i = 0; i < x.x[0].len; i++) {

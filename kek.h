@@ -26,7 +26,8 @@ typedef struct {
 
 typedef struct {
 	u64 len;
-	s64 *names;
+	s64 *colnames;
+	s64 *rownames;
 	vec *x;
 } mat;
 
