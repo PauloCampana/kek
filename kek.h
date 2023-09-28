@@ -42,6 +42,10 @@ vec vec_subtract(vec x, vec y);
 vec vec_multiply(vec x, vec y);
 vec vec_divide(vec x, vec y);
 
+vec mat_vec(mat x, s64 name);
+mat mat_transpose(mat x);
+mat mat_multiply(mat x, mat y);
+
 u64 all(vec);
 u64 any(vec);
 vec which(vec x, s64 op, f64 value);

@@ -34,16 +34,17 @@ void print_vec(vec x) {
 }
 
 void print_mat(mat x) {
-	u64 max = x.x[0].len < 10 ? x.x[0].len : 10;
+	u64 rowmax = x.x[0].len < 10 ? x.x[0].len : 10;
+	u64 colmax = x.len < 10 ? x.len : 10;
 	printf("matrix [%llu x %llu]\n", x.x[0].len, x.len);
 	s64 *formats = malloc(x.len * sizeof *formats);
 	for (u64 j = 0; j < x.len; j++) {
-		printf("%12.11s", x.names[j]);
+		if (x.names != NULL) printf("%12.11s", x.names[j]);
 		formats[j] = print_format_string(x.x[j]);
 	}
 	printf("\n");
-	for (u64 i = 0; i < max; i++) {
-		for (u64 j = 0; j < x.len; j++) {
+	for (u64 i = 0; i < rowmax; i++) {
+		for (u64 j = 0; j < colmax; j++) {
 			printf(formats[j], x.x[j].x[i]);
 		}
 		printf("\n");
