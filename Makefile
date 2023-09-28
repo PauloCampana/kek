@@ -1,7 +1,7 @@
 SOURCES := $(wildcard src/*.c)
 OBJECTS := $(SOURCES:src/%.c=obj/%.o)
-COMPILER = gcc
-FLAGS = -std=c2x -Wall -Wextra -pedantic -O3
+COMPILER = clang
+FLAGS = -std=c2x -Wall -Wextra -pedantic -O2
 LIBS = -lm
 
 run: bin

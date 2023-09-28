@@ -2,11 +2,11 @@
 
 // https://prng.di.unimi.it/
 
-thread_local u64 kek_seedseed = 0;
-thread_local u64 kek_seed[4] = {0};
+thread_local u64 _seedseed = 0;
+thread_local u64 _seed[4] = {0};
 
 u64 splitmix64() {
-	u64 z = (kek_seedseed += 0x9e3779b97f4a7c15);
+	u64 z = (_seedseed += 0x9e3779b97f4a7c15);
 	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
 	z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
 	return z ^ (z >> 31);
@@ -16,25 +16,25 @@ void rinit(u64 seed) {
 	if (seed == 0) {
 		struct timespec time;
 		timespec_get(&time, TIME_UTC);
-		kek_seedseed = time.tv_nsec;
+		_seedseed = time.tv_nsec;
 	}
-	else kek_seedseed = seed;
-	kek_seed[0] = splitmix64();
-	kek_seed[1] = splitmix64();
-	kek_seed[2] = splitmix64();
-	kek_seed[3] = splitmix64();
+	else _seedseed = seed;
+	_seed[0] = splitmix64();
+	_seed[1] = splitmix64();
+	_seed[2] = splitmix64();
+	_seed[3] = splitmix64();
 }
 
 u64 rotl(u64 x, u64 k) {return (x << k) | (x >> (64 - k));}
 u64 xoshiro256starstar(void) {
-	u64 result = rotl(kek_seed[1] * 5, 7) * 9;
-	u64 t = kek_seed[1] << 17;
-	kek_seed[2] ^= kek_seed[0];
-	kek_seed[3] ^= kek_seed[1];
-	kek_seed[1] ^= kek_seed[2];
-	kek_seed[0] ^= kek_seed[3];
-	kek_seed[2] ^= t;
-	kek_seed[3] = rotl(kek_seed[3], 45);
+	u64 result = rotl(_seed[1] * 5, 7) * 9;
+	u64 t = _seed[1] << 17;
+	_seed[2] ^= _seed[0];
+	_seed[3] ^= _seed[1];
+	_seed[1] ^= _seed[2];
+	_seed[0] ^= _seed[3];
+	_seed[2] ^= t;
+	_seed[3] = rotl(_seed[3], 45);
 	return result;
 }
 
@@ -49,24 +49,24 @@ void rjump(void) {
 	for (u64 i = 0; i < sizeof JUMP / sizeof *JUMP; i++) {
 		for (u64 b = 0; b < 64; b++) {
 			if (JUMP[i] & 1ull << b) {
-				s0 ^= kek_seed[0];
-				s1 ^= kek_seed[1];
-				s2 ^= kek_seed[2];
-				s3 ^= kek_seed[3];
+				s0 ^= _seed[0];
+				s1 ^= _seed[1];
+				s2 ^= _seed[2];
+				s3 ^= _seed[3];
 			}
 			xoshiro256starstar();
 		}
 	}
-	kek_seed[0] = s0;
-	kek_seed[1] = s1;
-	kek_seed[2] = s2;
-	kek_seed[3] = s3;
+	_seed[0] = s0;
+	_seed[1] = s1;
+	_seed[2] = s2;
+	_seed[3] = s3;
 }
 
 // Xorshift: Uniform ---------------------------------------------------------
 
 vec runif(u64 n, f64 min, f64 max) {
-	if (kek_seed[0] == 0) rinit(0);
+	if (_seedseed == 0) rinit(0);
 	f64 *u = malloc(n * sizeof *u);
 	for (u64 i = 0; i < n; i++) {
 		f64 u01 = (xoshiro256starstar() >> 11) * 0x1.0p-53;
@@ -276,9 +276,9 @@ vec rt(u64 n, u64 df) {
  * Binomial and Negative binomial are O(n * size)
  * No Hypergeometric
  * Gamma, Beta, Chi-squared, F and t need integer shape and df parameters
- *     Gamma       O(n * shape)
- *     Beta        O(n * (shape1 + shape2))
- *     Chi-squared O(n * df)
- *     F           O(n * (df1 + df2))
- *     t           O(n * df)
+ * 	Gamma       O(n * shape)
+ * 	Beta        O(n * (shape1 + shape2))
+ * 	Chi-squared O(n * df)
+ * 	F           O(n * (df1 + df2))
+ * 	t           O(n * df)
  */

@@ -11,6 +11,8 @@
 #define M_SQRT2 1.41421356237309504880
 #define M_SQRT2PI 2.50662827463100050241
 
+#define object_as_string(x) #x
+
 typedef signed   long long int i64;
 typedef unsigned long long int u64;
 typedef double                 f64;
@@ -23,19 +25,20 @@ typedef struct {
 } vec;
 
 typedef struct {
-	u64 nrow;
-	u64 ncol;
-	s64 *colnames;
-	vec *var;
-} df;
+	u64 len;
+	s64 *names;
+	vec *x;
+} mat;
 
 vec vec_new(u64 n);
 void vec_free(vec x);
 vec vec_fill(u64 n, f64 value);
 vec vec_seq(u64 n, f64 start, f64 by);
 vec vec_combine(vec x, vec y);
-vec vec_subtract(vec x, vec y);
+void vec_sort(vec x);
+vec vec_accumulate(vec x);
 vec vec_add(vec x, vec y);
+vec vec_subtract(vec x, vec y);
 vec vec_multiply(vec x, vec y);
 vec vec_divide(vec x, vec y);
 
@@ -125,8 +128,9 @@ f64 cov(vec x1, vec x2);
 f64 cor(vec x1, vec x2);
 
 void print_vec(vec x);
-void print_df(df data);
+void print_mat(mat x);
 
-df read_df(s64 path, u64 nrow, u64 ncol);
+mat read_mat(s64 path, u64 nrow, u64 ncol);
 
 void write_vec(vec x, s64 path);
+void write_mat(mat x, s64 path);

@@ -1,28 +1,30 @@
 #include "../kek.h"
-#include <math.h>
-#include <stdio.h>
 
-void print_vec(vec x) {
+s64 print_format_string(vec x) {
 	u64 max = x.len < 100 ? x.len : 100;
 	f64 oom = 0;
 	f64 whole = 0;
 	for (u64 i = 0; i < max; i++) {
-		oom += log10(fabs(x.x[i]));
+		oom += log10(fabs(x.x[i])) / max;
 		whole += x.x[i] == round(x.x[i]);
 	}
-	oom /= max;
-	s64 format;
-	if      (isinf(oom))   format = "% 12.0lf";
-	else if (whole == max) format = "% 12.0lf";
-	else if (oom < -4) format = "% 12.2le";
-	else if (oom < -3) format = "% 12.6lf";
-	else if (oom < -2) format = "% 12.5lf";
-	else if (oom < -1) format = "% 12.4lf";
-	else if (oom <  0) format = "% 12.3lf";
-	else if (oom <  1) format = "% 12.2lf";
-	else if (oom <  2) format = "% 12.1lf";
-	else if (oom <  6) format = "% 11.0lf.";
-	else               format = "% 12.2le";
+	s64 format = "% 12.2le";
+	if (oom > -4 && oom <= -3) format = "% 12.6lf";
+	if (oom > -3 && oom <= -2) format = "% 12.5lf";
+	if (oom > -2 && oom <= -1) format = "% 12.4lf";
+	if (oom > -1 && oom <=  0) format = "% 12.3lf";
+	if (oom >  0 && oom <=  1) format = "% 12.2lf";
+	if (oom >  1 && oom <=  2) format = "% 12.1lf";
+	if (oom >  2 && oom <=  6) format = "% 12.0lf";
+	if (whole == max)          format = "% 12.0lf";
+	if (oom < -4 || oom >=  6) format = "% 12.2le";
+	if (isinf(oom))            format = "% 12.0lf";
+	return format;
+}
+
+void print_vec(vec x) {
+	u64 max = x.len < 100 ? x.len : 100;
+	s64 format = print_format_string(x);
 	printf("vector [%llu]\n", x.len);
 	for (u64 i = 0; i < max; i++) {
 		printf(format, x.x[i]);
@@ -31,22 +33,19 @@ void print_vec(vec x) {
 	if (x.len % 10 != 0) printf("\n");
 }
 
-void print_df(df data) {
-	u64 max = data.nrow < 10 ? data.nrow : 10;
-	printf("dataframe [%llu x %llu]\n", data.nrow, data.ncol);
-	for (u64 j = 0; j < data.ncol; j++) {
-		printf("%15.14s", data.colnames[j]);
-	}
-	printf("\n");
-	for (u64 j = 0; j < data.ncol; j++) {
-		printf("        <float>");
+void print_mat(mat x) {
+	u64 max = x.x[0].len < 10 ? x.x[0].len : 10;
+	printf("matrix [%llu x %llu]\n", x.x[0].len, x.len);
+	s64 *formats = malloc(x.len * sizeof *formats);
+	for (u64 j = 0; j < x.len; j++) {
+		printf("%12.11s", x.names[j]);
+		formats[j] = print_format_string(x.x[j]);
 	}
 	printf("\n");
 	for (u64 i = 0; i < max; i++) {
-		for (u64 j = 0; j < data.ncol; j++) {
-			printf("%15.3lf", data.var[j].x[i]);
+		for (u64 j = 0; j < x.len; j++) {
+			printf(formats[j], x.x[j].x[i]);
 		}
 		printf("\n");
 	}
-	data.nrow < 10 ? printf(" ") : printf("%llu more rows\n", data.nrow - 10);
 }
