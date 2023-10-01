@@ -11,8 +11,6 @@
 #define M_SQRT2 1.41421356237309504880
 #define M_SQRT2PI 2.50662827463100050241
 
-#define object_as_string(x) #x
-
 typedef signed   long long int i64;
 typedef unsigned long long int u64;
 typedef double                 f64;
@@ -135,7 +133,8 @@ f64 cor(vec x1, vec x2);
 void print_vec(vec x);
 void print_mat(mat x);
 
-mat read_mat(s64 path, u64 nrow, u64 ncol);
+mat read_mat(s64 path);
 
 void write_vec(vec x, s64 path);
+void write_vec_dat(vec x, s64 path);
 void write_mat(mat x, s64 path);

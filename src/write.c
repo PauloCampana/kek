@@ -2,11 +2,17 @@
 
 void write_vec(vec x, s64 path) {
 	FILE *csv = fopen(path, "w");
-	fputs(object_as_string(x) "\n", csv);
+	fputs("vec\n", csv);
 	for (u64 i = 0; i < x.len; i++) {
-		fprintf(csv, "%.16lf\n", x.x[i]);
+		fprintf(csv, "%.17lf\n", x.x[i]);
 	}
 	fclose(csv);
+}
+
+void write_vec_dat(vec x, s64 path) {
+	FILE *dat = fopen(path, "wb");
+	fwrite(x.x, sizeof x.x[0], x.len, dat);
+	fclose(dat);
 }
 
 void write_mat(mat x, s64 path) {

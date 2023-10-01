@@ -1,5 +1,4 @@
 #include "../kek.h"
-#include <stdio.h>
 
 s64 print_format_string(vec x) {
 	u64 max = x.len < 100 ? x.len : 100;
@@ -39,14 +38,14 @@ void print_mat(mat x) {
 	u64 colmax = x.len < 10 ? x.len : 10;
 	printf("matrix [%llu x %llu]\n", x.x[0].len, x.len);
 	s64 *formats = malloc(x.len * sizeof *formats);
-	printf("    0");
-	for (u64 j = 0; j < x.len; j++) {
+	printf("          ");
+	for (u64 j = 0; j < colmax; j++) {
 		if (x.colnames != NULL) printf("%12.11s", x.colnames[j]);
 		formats[j] = print_format_string(x.x[j]);
 	}
 	printf("\n");
 	for (u64 i = 0; i < rowmax; i++) {
-		printf("%5s", x.rownames[i]);
+		printf("%-10.9s", x.rownames[i]);
 		for (u64 j = 0; j < colmax; j++) {
 			printf(formats[j], x.x[j].x[i]);
 		}

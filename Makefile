@@ -3,6 +3,7 @@ OBJECTS := $(SOURCES:src/%.c=obj/%.o)
 COMPILER = clang
 FLAGS = -std=c2x -Wall -Wextra -pedantic -O2
 LIBS = -lm
+# -fopenmp with gcc
 
 run: bin
 	@./bin

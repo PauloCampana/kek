@@ -13,12 +13,12 @@ u64 splitmix64() {
 }
 
 void rinit(u64 seed) {
+	_seedseed = seed;
 	if (seed == 0) {
 		struct timespec time;
 		timespec_get(&time, TIME_UTC);
 		_seedseed = time.tv_nsec;
 	}
-	else _seedseed = seed;
 	_seed[0] = splitmix64();
 	_seed[1] = splitmix64();
 	_seed[2] = splitmix64();

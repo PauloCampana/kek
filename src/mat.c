@@ -30,12 +30,12 @@ mat mat_multiply(mat x, mat y) {
 		z[j].x = malloc(x.x[0].len * sizeof z[j].x);
 		colnames[j] = y.colnames[j];
 		for (u64 i = 0; i < x.x[0].len; i++) {
-			if (j == 0) rownames[j] = x.rownames[j];
+			if (j == 0) rownames[i] = x.rownames[i];
 			z[j].x[i] = 0;
 			for (u64 l = 0; l < x.len; l++) {
 				z[j].x[i] += x.x[l].x[i] * y.x[j].x[l];
 			}
 		}
 	}
-	return (mat) {y.len, colnames, x.colnames, z};
+	return (mat) {y.len, colnames, rownames, z};
 }
