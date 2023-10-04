@@ -34,6 +34,7 @@ mat read_mat(s64 path) {
 			x[j].x[i] = strtod(buffer, NULL);
 		}
 	}
+	free(buffer);
 	fclose(csv);
 	return (mat) {ncol, colnames, rownames, x};
 }

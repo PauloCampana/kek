@@ -3,9 +3,10 @@
 s64 print_format_string(vec x) {
 	u64 max = x.len < 100 ? x.len : 100;
 	f64 oom = 0;
-	f64 whole = 0;
+	u64 whole = 0;
 	for (u64 i = 0; i < max; i++) {
-		oom += log10(fabs(x.x[i])) / max;
+		f64 tmp = log10(fabs(x.x[i]));
+		oom += isinf(tmp) ? 0 : tmp / max;
 		whole += x.x[i] == round(x.x[i]);
 	}
 	s64 format = "% 12.2le";
@@ -18,7 +19,6 @@ s64 print_format_string(vec x) {
 	if (oom >  2 && oom <=  6) format = "% 12.0lf";
 	if (whole == max)          format = "% 12.0lf";
 	if (oom < -4 || oom >=  6) format = "% 12.2le";
-	if (isinf(oom))            format = "% 12.0lf";
 	return format;
 }
 
@@ -45,7 +45,7 @@ void print_mat(mat x) {
 	}
 	printf("\n");
 	for (u64 i = 0; i < rowmax; i++) {
-		printf("%-10.9s", x.rownames[i]);
+		if (x.rownames != NULL) printf("%-10.9s", x.rownames[i]);
 		for (u64 j = 0; j < colmax; j++) {
 			printf(formats[j], x.x[j].x[i]);
 		}
