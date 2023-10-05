@@ -18,12 +18,14 @@ void write_vec_dat(vec x, s64 path) {
 void write_mat(mat x, s64 path) {
 	FILE *csv = fopen(path, "w");
 	for (u64 j = 0; j < x.len; j++) {
-		fprintf(csv, "%s,", x.colnames[j]);
+		fprintf(csv, "%s", x.colnames[j]);
+		if (j != x.len - 1) fputc(',', csv);
 	}
 	fputs("\n", csv);
 	for (u64 i = 0; i < x.x[0].len; i++) {
 		for (u64 j = 0; j < x.len; j++) {
-			fprintf(csv, "%lg,", x.x[j].x[i]);
+			fprintf(csv, "%lg", x.x[j].x[i]);
+			if (j != x.len - 1) fputc(',', csv);
 		}
 		fputs("\n", csv);
 	}

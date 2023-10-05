@@ -5,6 +5,12 @@ vec vec_new(u64 n) {
 	return (vec) {n, x};
 }
 
+vec vec_copy(vec x) {
+	vec y = vec_new(x.len);
+	memcpy(y.x, x.x, x.len * sizeof x.x);
+	return y;
+}
+
 void vec_free(vec x) {
 	free(x.x);
 }

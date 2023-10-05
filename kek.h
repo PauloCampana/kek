@@ -23,13 +23,14 @@ typedef struct {
 } vec;
 
 typedef struct {
-	u64 len;       // TODO: change to
-	s64 *colnames; // s64 colnames[64]
-	s64 *rownames; // s64 rownames[64]
+	u64 len;
+	c64 (*colnames)[64];
+	c64 (*rownames)[64];
 	vec *x;
 } mat;
 
 vec vec_new(u64 n);
+vec vec_copy(vec x);
 void vec_free(vec x);
 vec vec_fill(u64 n, f64 value);
 vec vec_seq(u64 n, f64 start, f64 by);
@@ -41,8 +42,9 @@ vec vec_subtract(vec x, vec y);
 vec vec_multiply(vec x, vec y);
 vec vec_divide(vec x, vec y);
 
-void mat_free(mat x);
 mat mat_new(u64 nrow, u64 ncol);
+mat mat_copy(mat x);
+void mat_free(mat x);
 vec mat_vec(mat x, s64 name);
 mat mat_transpose(mat x);
 mat mat_multiply(mat x, mat y);

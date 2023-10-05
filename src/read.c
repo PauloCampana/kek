@@ -14,27 +14,21 @@ mat read_mat(s64 path) {
 		if (c == '\n') break;
 	}
 	rewind(csv);
-	vec *x = malloc(ncol * sizeof *x);
-	s64 *colnames = malloc(ncol * sizeof *colnames);
-	s64 *rownames = malloc(nrow * sizeof *rownames);
+	mat x = mat_new(nrow, ncol);
 	for (u64 j = 0; j < ncol; j++) {
-		x[j].len = nrow;
-		x[j].x = malloc(nrow * sizeof x[j].x);
-		colnames[j] = malloc(64);
-		u64 signal = fscanf(csv, "\n%[^,;\t\n],", colnames[j]);
+		x.x[j] = vec_new(nrow);
+		u64 signal = fscanf(csv, "\n%[^,;\t\n],", x.colnames[j]);
 		if (signal != 1) exit(1);
 	}
-	s64 buffer = malloc(64);
+	c64 buffer[64];
 	for (u64 i = 0; i < nrow; i++) {
-		rownames[i] = malloc(64);
-		sprintf(rownames[i], "%llu", i);
+		sprintf(x.rownames[i], "%llu", i);
 		for (u64 j = 0; j < ncol; j++) {
 			u64 signal = fscanf(csv, "\n%[^,;\t\n],", buffer);
 			if (signal != 1) exit(1);
-			x[j].x[i] = strtod(buffer, NULL);
+			x.x[j].x[i] = strtod(buffer, NULL);
 		}
 	}
-	free(buffer);
 	fclose(csv);
-	return (mat) {ncol, colnames, rownames, x};
+	return x;
 }
