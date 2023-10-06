@@ -1,14 +1,24 @@
 #include "kek.h"
 
-f64 mat_determinant2(mat x);
-
 int main(void) {
 	mat diamonds = read_mat("data/diamonds.csv");
-	print_mat(diamonds);
+	// print_mat(diamonds);
 
-	mat y = mat_multiply(mat_transpose(diamonds), diamonds);
-	print_mat(y);
+	reg fit = reg_linear(diamonds, "price");
+	print_mat(fit.coefficients);
 
-	f64 d = mat_determinant(y);
-	printf("\n%lg\n", d);
+	vec n = reg_residuals_norm(fit);
+	print_vec(n);
+
+	// vec yhat2 = mat_vec(yhat, "price");
+	// // print_vec(yhat2);
+
+	// vec resid = vec_new(yhat2.len);
+	// for (u64 i = 0; i < resid.len; i++) {
+	// 	resid.x[i] = y.x[0].x[i] - yhat2.x[i];
+	// }
+
+	// print_vec(resid);
+
+	// printf("mean = %lg\n", mean(resid));
 }

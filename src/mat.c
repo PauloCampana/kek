@@ -118,3 +118,30 @@ f64 mat_determinant(mat x) {
 	mat_free(y);
 	return result;
 }
+
+mat mat_inverse(mat x) {
+	f64 det = mat_determinant(x);
+	mat y = mat_copy(x);
+	u64 n = y.len;
+	for (u64 j = 0; j < n; j++) {
+		for (u64 i = 0; i < n; i++) {
+			vec rows = vec_new(n - 1);
+			for (u64 k = 0, tmp = 0; k < rows.len; k++, tmp++) {
+				if (tmp == i) tmp++;
+				rows.x[k] = tmp;
+			}
+			vec cols = vec_new(n - 1);
+			for (u64 k = 0, tmp = 0; k < cols.len; k++, tmp++) {
+				if (tmp == j) tmp++;
+				cols.x[k] = tmp;
+			}
+			mat minor = mat_submat(x, rows, cols);
+			f64 cofactor = mat_determinant(minor);
+			vec_free(rows);
+			vec_free(cols);
+			mat_free(minor);
+			y.x[i].x[j] = pow(-1, i + j) * cofactor / det;
+		}
+	}
+	return y;
+}

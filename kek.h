@@ -29,6 +29,12 @@ typedef struct {
 	vec *x;
 } mat;
 
+typedef struct {
+	mat x;
+	mat y;
+	mat coefficients;
+} reg;
+
 vec vec_new(u64 n);
 vec vec_copy(vec x);
 void vec_free(vec x);
@@ -50,6 +56,13 @@ mat mat_transpose(mat x);
 mat mat_multiply(mat x, mat y);
 mat mat_submat(mat x, vec rows, vec cols);
 f64 mat_determinant(mat x);
+mat mat_inverse(mat x);
+
+reg reg_linear(mat data, s64 y);
+vec reg_predictions(reg fit);
+vec reg_residuals(reg fit);
+vec reg_residuals_norm(reg fit);
+f64 reg_rmse(reg fit);
 
 u64 all(vec);
 u64 any(vec);
