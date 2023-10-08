@@ -1,11 +1,11 @@
 #include "../kek.h"
-#include <stdlib.h>
+#include <math.h>
 #include <string.h>
 
 reg reg_linear(mat data, s64 dep) {
-	u64 n = data.x[0].len;
+	u64 n = data.x->len;
 	u64 p = data.len;
-	u64 ycol;
+	u64 ycol = 0;
 	for (u64 j = 0; j < p; j++) {
 		u64 cmp = strcmp(data.colnames[j], dep);
 		if (cmp == 0) ycol = j;
@@ -48,7 +48,7 @@ vec reg_predictions(reg fit) {
 
 vec reg_residuals(reg fit) {
 	vec p = reg_predictions(fit);
-	vec r = vec_new(fit.y.x[0].len);
+	vec r = vec_new(fit.y.x->len);
 	for (u64 i = 0; i < r.len; i++) {
 		r.x[i] = fit.y.x[0].x[i] - p.x[i];
 	}
@@ -58,7 +58,7 @@ vec reg_residuals(reg fit) {
 }
 
 f64 reg_rmse(reg fit) {
-	u64 n = fit.x.x[0].len;
+	u64 n = fit.x.x->len;
 	u64 p = fit.x.len;
 	vec r = reg_residuals(fit);
 	f64 rmse = sqrt(var(r) * (n - 1) / (n - p));

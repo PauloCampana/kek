@@ -1,73 +1,115 @@
 #include "../kek.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <threads.h>
+#include <time.h>
 
 // https://prng.di.unimi.it/
 
-thread_local u64 _seedseed = 0;
-thread_local u64 _seed[4] = {0};
+thread_local u64 seedseed_ = 0;
+thread_local u64 seed_[4] = {0};
 
 u64 splitmix64() {
-	u64 z = (_seedseed += 0x9e3779b97f4a7c15);
+	seedseed_ += 0x9e3779b97f4a7c15;
+	u64 z = seedseed_;
 	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
 	z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
 	return z ^ (z >> 31);
 }
 
 void rinit(u64 seed) {
-	_seedseed = seed;
+	seedseed_ = seed;
 	if (seed == 0) {
 		struct timespec time;
 		timespec_get(&time, TIME_UTC);
-		_seedseed = time.tv_nsec;
+		seedseed_ = time.tv_nsec;
 	}
-	_seed[0] = splitmix64();
-	_seed[1] = splitmix64();
-	_seed[2] = splitmix64();
-	_seed[3] = splitmix64();
+	seed_[0] = splitmix64();
+	seed_[1] = splitmix64();
+	seed_[2] = splitmix64();
+	seed_[3] = splitmix64();
 }
 
 u64 rotl(u64 x, u64 k) {return (x << k) | (x >> (64 - k));}
 u64 xoshiro256starstar(void) {
-	u64 result = rotl(_seed[1] * 5, 7) * 9;
-	u64 t = _seed[1] << 17;
-	_seed[2] ^= _seed[0];
-	_seed[3] ^= _seed[1];
-	_seed[1] ^= _seed[2];
-	_seed[0] ^= _seed[3];
-	_seed[2] ^= t;
-	_seed[3] = rotl(_seed[3], 45);
+	u64 result = rotl(seed_[1] * 5, 7) * 9;
+	u64 t = seed_[1] << 17;
+	seed_[2] ^= seed_[0];
+	seed_[3] ^= seed_[1];
+	seed_[1] ^= seed_[2];
+	seed_[0] ^= seed_[3];
+	seed_[2] ^= t;
+	seed_[3] = rotl(seed_[3], 45);
 	return result;
 }
 
 void rjump(void) {
-	u64 JUMP[] = {
+	u64 jump[] = {
 		0x180ec6d33cfd0aba,
 		0xd5a61266f0c9392c,
 		0xa9582618e03fc9aa,
 		0x39abdc4529b1661c
 	};
-	u64 s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-	for (u64 i = 0; i < sizeof JUMP / sizeof *JUMP; i++) {
+	u64 s0 = 0;
+	u64 s1 = 0;
+	u64 s2 = 0;
+	u64 s3 = 0;
+	for (u64 i = 0; i < 4; i++) {
 		for (u64 b = 0; b < 64; b++) {
-			if (JUMP[i] & 1ull << b) {
-				s0 ^= _seed[0];
-				s1 ^= _seed[1];
-				s2 ^= _seed[2];
-				s3 ^= _seed[3];
+			if (jump[i] & 1ull << b) {
+				s0 ^= seed_[0];
+				s1 ^= seed_[1];
+				s2 ^= seed_[2];
+				s3 ^= seed_[3];
 			}
 			xoshiro256starstar();
 		}
 	}
-	_seed[0] = s0;
-	_seed[1] = s1;
-	_seed[2] = s2;
-	_seed[3] = s3;
+	seed_[0] = s0;
+	seed_[1] = s1;
+	seed_[2] = s2;
+	seed_[3] = s3;
 }
 
-// Xorshift: Uniform ---------------------------------------------------------
+// Sampling -------------------------------------------------------------------
+
+vec sample_yes_rep(vec x, u64 size) {
+	vec s = vec_new(size);
+	for (u64 i = 0; i < size; i++) {
+		u64 index = xoshiro256starstar() % x.len;
+		s.x[i] = x.x[index];
+	}
+	return s;
+}
+
+vec sample_no_rep(vec x, u64 size) {
+	vec tmp = vec_new(size);
+	for (u64 i = 0, m = 0; i < x.len; i++) {
+		f64 u01 = (xoshiro256starstar() >> 11) * 0x1.0p-53;
+		if ((x.len - i) * u01 < size - m) tmp.x[m++] = x.x[i];
+	}
+	vec s = vec_new(size);
+	for (u64 i = 0; i < size; i++) {
+		u64 j = xoshiro256starstar() % (i + 1);
+		s.x[i] = s.x[j];
+		s.x[j] = tmp.x[i];
+	}
+	vec_free(tmp);
+	return s;
+}
+
+vec sample(vec x, u64 size, u64 replacement) {
+	if (seedseed_ == 0) rinit(0);
+	if (replacement == 0) return sample_no_rep(x, size);
+	return sample_yes_rep(x, size);
+}
+
+// Xorshift: Uniform ----------------------------------------------------------
 
 vec runif(u64 n, f64 min, f64 max) {
-	if (_seedseed == 0) rinit(0);
-	f64 *u = malloc(n * sizeof *u);
+	if (seedseed_ == 0) rinit(0);
+	f64 *u = malloc(n * sizeof u[0]);
 	for (u64 i = 0; i < n; i++) {
 		f64 u01 = (xoshiro256starstar() >> 11) * 0x1.0p-53;
 		u[i] = min + (max - min) * u01;
@@ -75,7 +117,7 @@ vec runif(u64 n, f64 min, f64 max) {
 	return (vec) {n, u};
 }
 
-// Discrete inversion: Bernoulli, Geometric, Poisson -------------------------
+// Discrete inversion: Bernoulli, Geometric, Poisson --------------------------
 
 vec rber(u64 n, f64 prob) {
 	vec x = runif(n, 0, 1);
@@ -94,7 +136,7 @@ vec rgeom(u64 n, f64 prob) {
 }
 
 vec rpois(u64 n, f64 lambda) {
-	f64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof x[0]);
 	vec u = runif(n, 0, 1);
 	for (u64 i = 0; i < n; i++) {
 		f64 p = exp(-lambda);
@@ -109,10 +151,10 @@ vec rpois(u64 n, f64 lambda) {
 	return (vec) {n, x};
 }
 
-// Relation to Bernoulli/Geometric: Binomial, Negative binomial --------------
+// Relation to Bernoulli/Geometric: Binomial, Negative binomial ---------------
 
 vec rbinom(u64 n, u64 size, f64 prob) {
-	f64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof x[0]);
 	for (u64 i = 0; i < n; i++) {
 		vec u = runif(size, 0, 1);
 		x[i] = 0;
@@ -125,7 +167,7 @@ vec rbinom(u64 n, u64 size, f64 prob) {
 }
 
 vec rnbinom(u64 n, u64 size, f64 prob) {
-	f64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof x[0]);
 	for (u64 i = 0; i < n; i++) {
 		vec g = rgeom(size, prob);
 		x[i] = 0;
@@ -137,7 +179,7 @@ vec rnbinom(u64 n, u64 size, f64 prob) {
 	return (vec) {n, x};
 }
 
-// Continuous inversion: Exponential, Weibull, Cauchy, Logistic --------------
+// Continuous inversion: Exponential, Weibull, Cauchy, Logistic ---------------
 
 vec rexp(u64 n, f64 rate) {
 	vec x = runif(n, 0, 1);
@@ -171,10 +213,10 @@ vec rlogis(u64 n, f64 location, f64 scale) {
 	return x;
 }
 
-// Relation to Exponential: Gamma, Chi-squared, F, beta ----------------------
+// Relation to Exponential: Gamma, Chi-squared, F, beta -----------------------
 
 vec rgamma(u64 n, u64 shape, f64 rate) {
-	f64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof x[0]);
 	for (u64 i = 0; i < n; i++) {
 		vec u = runif(shape, 0, 1);
 		x[i] = 0;
@@ -188,7 +230,7 @@ vec rgamma(u64 n, u64 shape, f64 rate) {
 }
 
 vec rchisq(u64 n, u64 df) {
-	f64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof x[0]);
 	for (u64 i = 0; i < n; i++) {
 		vec u = runif(df / 2, 0, 1);
 		x[i] = 0;
@@ -218,7 +260,7 @@ vec rf(u64 n, u64 df1, u64 df2) {
 }
 
 vec rbeta(u64 n, u64 shape1, u64 shape2) {
-	f64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof x[0]);
 	for (u64 i = 0; i < n; i++) {
 		vec u = runif(shape1 + shape2, 0, 1);
 		f64 num = 0;
@@ -235,10 +277,10 @@ vec rbeta(u64 n, u64 shape1, u64 shape2) {
 	return (vec) {n, x};
 }
 
-// Box Muller: Normal --------------------------------------------------------
+// Box Muller: Normal ---------------------------------------------------------
 
 vec rnorm(u64 n, f64 mean, f64 sd) {
-	f64 *x = malloc(n * sizeof *x);
+	f64 *x = malloc(n * sizeof x[0]);
 	vec u = runif(n + 1, 0, 1);
 	for (u64 i = 0; i < n; i += 2) {
 		f64 R = sd * sqrt(-2 * log(u.x[i]));
@@ -250,7 +292,7 @@ vec rnorm(u64 n, f64 mean, f64 sd) {
 	return (vec) {n, x};
 }
 
-// Relation to Normal: Log normal, T -----------------------------------------
+// Relation to Normal: Log normal, T ------------------------------------------
 
 vec rlnorm(u64 n, f64 meanlog, f64 sdlog) {
 	vec x = rnorm(n, meanlog, sdlog);
@@ -271,7 +313,7 @@ vec rt(u64 n, u64 df) {
 }
 
 /*
- * Limitations: --------------------------------------------------------------
+ * Limitations: ---------------------------------------------------------------
  * Poisson is O(n * lambda)
  * Binomial and Negative binomial are O(n * size)
  * No Hypergeometric

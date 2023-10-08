@@ -1,4 +1,7 @@
 #include "../kek.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 s64 print_format_string(vec x) {
 	u64 max = x.len < 100 ? x.len : 100;
@@ -22,10 +25,10 @@ s64 print_format_string(vec x) {
 	return format;
 }
 
-void print_vec(vec x) {
+void print_vec_(vec x, s64 name) {
 	u64 max = x.len < 100 ? x.len : 100;
 	s64 format = print_format_string(x);
-	printf("vector [%llu]\n", x.len);
+	printf("%s [%llu]\n", name, x.len);
 	for (u64 i = 0; i < max; i++) {
 		printf(format, x.x[i]);
 		if (i % 10 == 9) printf("\n");
@@ -33,11 +36,11 @@ void print_vec(vec x) {
 	if (x.len % 10 != 0) printf("\n");
 }
 
-void print_mat(mat x) {
+void print_mat_(mat x, s64 name) {
 	u64 rowmax = x.x[0].len < 10 ? x.x[0].len : 10;
 	u64 colmax = x.len < 10 ? x.len : 10;
-	printf("matrix [%llu x %llu]\n", x.x[0].len, x.len);
-	s64 *formats = malloc(x.len * sizeof *formats);
+	printf("%s [%llu x %llu]\n", name, x.x[0].len, x.len);
+	s64 *formats = malloc(x.len * sizeof formats[0]);
 	printf("          ");
 	for (u64 j = 0; j < colmax; j++) {
 		if (x.colnames != NULL) printf("%12.11s", x.colnames[j]);
@@ -51,4 +54,5 @@ void print_mat(mat x) {
 		}
 		printf("\n");
 	}
+	free(formats);
 }

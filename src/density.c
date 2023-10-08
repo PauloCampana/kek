@@ -1,4 +1,5 @@
 #include "../kek.h"
+#include <math.h>
 
 f64 dunif(f64 x, f64 min, f64 max) {
 	if (x < min || x > max) return 0;
@@ -71,7 +72,7 @@ f64 dchisq(f64 x, f64 df) {
 	return dgamma(x, df / 2, 0.5);
 }
 
-f64 dF(f64 x, f64 df1, f64 df2) {
+f64 df(f64 x, f64 df1, f64 df2) {
 	if (x <= 0) return 0;
 	f64 df3 = df1 / 2;
 	f64 df4 = df2 / 2;

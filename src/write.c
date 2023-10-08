@@ -1,4 +1,5 @@
 #include "../kek.h"
+#include <stdio.h>
 
 void write_vec(vec x, s64 path) {
 	FILE *csv = fopen(path, "w");

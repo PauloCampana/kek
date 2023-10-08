@@ -1,4 +1,5 @@
 #include "../kek.h"
+#include <math.h>
 
 f64 punif(f64 x, f64 min, f64 max) {
 	if (x <= min) return 0;
@@ -20,7 +21,9 @@ f64 pgeom(f64 x, f64 prob) {
 
 f64 ppois(f64 x, f64 lambda) {
 	if (x < 0) return 0;
-	f64 sum = 0, li = 1, gam = 1;
+	f64 sum = 0;
+	f64 li = 1;
+	f64 gam = 1;
 	for (u64 i = 0; i <= floor(x); i++) {
 		sum += li / gam;
 		li *= lambda;
@@ -63,7 +66,9 @@ f64 plogis(f64 x, f64 location, f64 scale) {
 f64 pgamma(f64 x, f64 shape, f64 rate) {
 	if (x <= 0) return 0;
 	x *= rate;
-	f64 sum = 0, xi = 1, gam = tgamma(shape + 1);
+	f64 sum = 0;
+	f64 xi = 1;
+	f64 gam = tgamma(shape + 1);
 	for (u64 i = 0; i < 100; i++) {
 		sum += xi / gam;
 		xi *= x;
@@ -77,24 +82,25 @@ f64 pchisq(f64 x, f64 df) {
 	return pgamma(x, df / 2, 0.5);
 }
 
-f64 pF(f64 x, f64 df1, f64 df2) {
+f64 pf(f64 x, f64 df1, f64 df2) {
 	return pbeta(df1 * x / (df2 + df1 * x), df1 / 2, df2 / 2);
 }
 
 f64 pbeta(f64 x, f64 shape1, f64 shape2) {
 	if (x <= 0) return 0;
 	if (x >= 1) return 1;
-	f64 num, den, current = 0;
+	f64 current = 0;
 	for (u64 i = 15; i >= 1; i--) {
 		u64 m = i / 2;
 		if (i % 2 == 0) {
-			num = m * (shape2 - m) * x;
-			den = (shape1 + 2 * m - 1) * (shape1 + 2 * m);
+			f64 num = m * (shape2 - m) * x;
+			f64 den = (shape1 + 2 * m - 1) * (shape1 + 2 * m);
+			current = num / den / (1 + current);
 		} else {
-			num = -(shape1 + m) * (shape1 + shape2 + m) * x;
-			den = (shape1 + 2 * m + 1) * (shape1 + 2 * m);
+			f64 num = -(shape1 + m) * (shape1 + shape2 + m) * x;
+			f64 den = (shape1 + 2 * m + 1) * (shape1 + 2 * m);
+			current = num / den / (1 + current);
 		}
-		current = num / den / (1 + current);
 	}
 	f64 beta = lgamma(shape1) + lgamma(shape2) - lgamma(shape1 + shape2);
 	f64 tmp = shape1 * log(x) + shape2 * log(1 - x) - beta;

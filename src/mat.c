@@ -1,4 +1,7 @@
 #include "../kek.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 mat mat_new(u64 nrow, u64 ncol) {
 	vec *x = malloc(ncol * sizeof x[0]);
@@ -16,7 +19,7 @@ mat mat_new(u64 nrow, u64 ncol) {
 
 mat mat_copy(mat x) {
 	u64 ncol = x.len;
-	u64 nrow = x.x[0].len;
+	u64 nrow = x.x->len;
 	mat y = mat_new(nrow, ncol);
 	for (u64 j = 0; j < ncol; j++) {
 		y.x[j] = vec_copy(x.x[j]);
@@ -47,8 +50,8 @@ vec mat_vec(mat x, s64 name) {
 }
 
 mat mat_transpose(mat x) {
-	u64 ncol = x.x[0].len;
 	u64 nrow = x.len;
+	u64 ncol = x.x->len;
 	mat y = mat_new(nrow, ncol);
 	for (u64 i = 0; i < nrow; i++) {
 		strncpy(y.rownames[i], x.colnames[i], sizeof y.rownames[0]);
@@ -63,8 +66,8 @@ mat mat_transpose(mat x) {
 }
 
 mat mat_multiply(mat x, mat y) {
-	if (x.len != y.x[0].len) exit(1);
-	u64 nrow = x.x[0].len;
+	if (x.len != y.x->len) exit(1);
+	u64 nrow = x.x->len;
 	u64 ncol = y.len;
 	u64 nother = x.len;
 	mat z = mat_new(nrow, ncol);
@@ -101,7 +104,7 @@ mat mat_submat(mat x, vec rows, vec cols) {
 }
 
 f64 mat_determinant(mat x) {
-	if (x.len != x.x[0].len) return NAN;
+	if (x.len != x.x->len) return NAN;
 	mat y = mat_copy(x);
 	u64 n = y.len;
 	for (u64 k = 0; k < n - 1; k++) {

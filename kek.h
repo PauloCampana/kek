@@ -1,14 +1,9 @@
 #pragma once
 
-#include <time.h>
-#include <math.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <threads.h>
 
-#define M_PI 3.14159265358979323846
-#define M_SQRT2 1.41421356237309504880
+#define M_PI      3.14159265358979323846
+#define M_SQRT2   1.41421356237309504880
 #define M_SQRT2PI 2.50662827463100050241
 
 typedef signed   long long int i64;
@@ -41,8 +36,11 @@ void vec_free(vec x);
 vec vec_fill(u64 n, f64 value);
 vec vec_seq(u64 n, f64 start, f64 by);
 vec vec_combine(vec x, vec y);
-void vec_sort(vec x);
+vec vec_sort(vec x);
 vec vec_accumulate(vec x);
+u64 vec_all(vec);
+u64 vec_any(vec);
+vec vec_which(vec x, s64 op, f64 value);
 vec vec_add(vec x, vec y);
 vec vec_subtract(vec x, vec y);
 vec vec_multiply(vec x, vec y);
@@ -58,18 +56,15 @@ mat mat_submat(mat x, vec rows, vec cols);
 f64 mat_determinant(mat x);
 mat mat_inverse(mat x);
 
-reg reg_linear(mat data, s64 y);
+reg reg_linear(mat data, s64 dep);
 vec reg_predictions(reg fit);
 vec reg_residuals(reg fit);
 vec reg_residuals_norm(reg fit);
 f64 reg_rmse(reg fit);
 
-u64 all(vec);
-u64 any(vec);
-vec which(vec x, s64 op, f64 value);
-
 void rinit(u64 seed);
 void rjump(void);
+vec sample(vec x, u64 size, u64 replacement);
 vec runif(u64 n, f64 min, f64 max);
 vec rber(u64 n, f64 prob);
 vec rgeom(u64 n, f64 prob);
@@ -149,8 +144,10 @@ f64 sd(vec x);
 f64 cov(vec x1, vec x2);
 f64 cor(vec x1, vec x2);
 
-void print_vec(vec x);
-void print_mat(mat x);
+void print_vec_(vec x, s64 name);
+#define print_vec(x) print_vec_(x, #x);
+void print_mat_(mat x, s64 name);
+#define print_mat(x) print_mat_(x, #x);
 
 mat read_mat(s64 path);
 

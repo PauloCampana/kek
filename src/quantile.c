@@ -1,4 +1,5 @@
 #include "../kek.h"
+#include <math.h>
 
 f64 qunif(f64 x, f64 min, f64 max) {
 	if (x < 0 || x > 1) return NAN;
@@ -29,6 +30,7 @@ f64 qpois(f64 x, f64 lambda) {
 
 f64 qbinom(f64 x, u64 size, f64 prob) {
 	if (x < 0 || x > 1) return NAN;
+	if (x == 1) return size;
 	f64 sum = 0;
 	for (u64 i = 0; ; i++) {
 		sum += dbinom(i, size, prob);

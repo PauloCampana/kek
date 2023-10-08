@@ -1,4 +1,6 @@
 #include "../kek.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 mat read_mat(s64 path) {
 	FILE *csv = fopen(path, "r");
