@@ -10,12 +10,6 @@ void write_vec(vec x, s64 path) {
 	fclose(csv);
 }
 
-void write_vec_dat(vec x, s64 path) {
-	FILE *dat = fopen(path, "wb");
-	fwrite(x.x, sizeof x.x[0], x.len, dat);
-	fclose(dat);
-}
-
 void write_mat(mat x, s64 path) {
 	FILE *csv = fopen(path, "w");
 	for (u64 j = 0; j < x.len; j++) {

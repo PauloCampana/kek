@@ -61,7 +61,7 @@ f64 reg_rmse(reg fit) {
 	u64 n = fit.x.x->len;
 	u64 p = fit.x.len;
 	vec r = reg_residuals(fit);
-	f64 rmse = sqrt(var(r) * (n - 1) / (n - p));
+	f64 rmse = sqrt(vec_var(r) * (n - 1) / (n - p));
 	vec_free(r);
 	return rmse;
 }

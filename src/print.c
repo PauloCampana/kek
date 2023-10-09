@@ -25,7 +25,15 @@ s64 print_format_string(vec x) {
 	return format;
 }
 
-void print_vec_(vec x, s64 name) {
+void print_u64(u64 x, s64 name) {
+	printf("%s: %llu\n", name, x);
+}
+
+void print_f64(f64 x, s64 name) {
+	printf("%s: %lg\n", name, x);
+}
+
+void print_vec(vec x, s64 name) {
 	u64 max = x.len < 100 ? x.len : 100;
 	s64 format = print_format_string(x);
 	printf("%s [%llu]\n", name, x.len);
@@ -36,7 +44,7 @@ void print_vec_(vec x, s64 name) {
 	if (x.len % 10 != 0) printf("\n");
 }
 
-void print_mat_(mat x, s64 name) {
+void print_mat(mat x, s64 name) {
 	u64 rowmax = x.x[0].len < 10 ? x.x[0].len : 10;
 	u64 colmax = x.len < 10 ? x.len : 10;
 	printf("%s [%llu x %llu]\n", name, x.x[0].len, x.len);

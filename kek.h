@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdio.h>
-
 #define M_PI      3.14159265358979323846
 #define M_SQRT2   1.41421356237309504880
 #define M_SQRT2PI 2.50662827463100050241
@@ -35,16 +33,32 @@ vec vec_copy(vec x);
 void vec_free(vec x);
 vec vec_fill(u64 n, f64 value);
 vec vec_seq(u64 n, f64 start, f64 by);
+vec vec_rep(vec x, u64 times, u64 each);
+vec vec_unique(vec x);
 vec vec_combine(vec x, vec y);
 vec vec_sort(vec x);
+vec vec_reverse(vec x);
 vec vec_accumulate(vec x);
 u64 vec_all(vec);
 u64 vec_any(vec);
+f64 vec_min(vec x);
+f64 vec_max(vec x);
+vec vec_in(vec x, vec y);
 vec vec_which(vec x, s64 op, f64 value);
+vec vec_filter(vec x, s64 op, f64 value);
+
+vec vec_apply1(vec x, f64 fun(f64));
+vec vec_apply2(vec x, vec y, f64 fun(f64, f64));
+vec vec_apply3(vec x, vec y, vec z, f64 fun(f64, f64, f64));
+vec vec_standardize(vec x);
 vec vec_add(vec x, vec y);
 vec vec_subtract(vec x, vec y);
 vec vec_multiply(vec x, vec y);
 vec vec_divide(vec x, vec y);
+vec vec_round(vec x);
+vec vec_floor(vec x);
+vec vec_ceiling(vec x);
+vec vec_truncate(vec x);
 
 mat mat_new(u64 nrow, u64 ncol);
 mat mat_copy(mat x);
@@ -95,7 +109,7 @@ f64 dcauchy(f64 x, f64 location, f64 scale);
 f64 dlogis(f64 x, f64 location, f64 scale);
 f64 dgamma(f64 x, f64 shape, f64 rate);
 f64 dchisq(f64 x, f64 df);
-f64 dF(f64 x, f64 df1, f64 df2);
+f64 df(f64 x, f64 df1, f64 df2);
 f64 dbeta(f64 x, f64 shape1, f64 shape2);
 f64 dnorm(f64 x, f64 mean, f64 sd);
 f64 dlnorm(f64 x, f64 meanlog, f64 sdlog);
@@ -113,7 +127,7 @@ f64 pcauchy(f64 x, f64 location, f64 scale);
 f64 plogis(f64 x, f64 location, f64 scale);
 f64 pgamma(f64 x, f64 shape, f64 rate);
 f64 pchisq(f64 x, f64 df);
-f64 pF(f64 x, f64 df1, f64 df2);
+f64 pf(f64 x, f64 df1, f64 df2);
 f64 pbeta(f64 x, f64 shape1, f64 shape2);
 f64 pnorm(f64 x, f64 mean, f64 sd);
 f64 plnorm(f64 x, f64 meanlog, f64 sdlog);
@@ -131,26 +145,39 @@ f64 qcauchy(f64 x, f64 location, f64 scale);
 f64 qlogis(f64 x, f64 location, f64 scale);
 f64 qgamma(f64 x, f64 shape, f64 rate);
 f64 qchisq(f64 x, f64 df);
-f64 qF(f64 x, f64 df1, f64 df2);
+f64 qf(f64 x, f64 df1, f64 df2);
 f64 qbeta(f64 x, f64 shape1, f64 shape2);
 f64 qnorm(f64 x, f64 mean, f64 sd);
 f64 qlnorm(f64 x, f64 meanlog, f64 sdlog);
 f64 qt(f64 x, f64 df);
 
-f64 sum(vec x);
-f64 mean(vec x);
-f64 var(vec x);
-f64 sd(vec x);
-f64 cov(vec x1, vec x2);
-f64 cor(vec x1, vec x2);
-
-void print_vec_(vec x, s64 name);
-#define print_vec(x) print_vec_(x, #x);
-void print_mat_(mat x, s64 name);
-#define print_mat(x) print_mat_(x, #x);
+f64 vec_sum(vec x);
+f64 vec_mean(vec x);
+f64 vec_var(vec x);
+f64 vec_sd(vec x);
+f64 vec_cov(vec x1, vec x2);
+f64 vec_cor(vec x1, vec x2);
+vec mat_col_sum(mat x);
+vec mat_col_mean(mat x);
+vec mat_col_var(mat x);
+vec mat_col_sd(mat x);
+mat mat_cov(mat x);
+mat mat_cor(mat x);
 
 mat read_mat(s64 path);
 
 void write_vec(vec x, s64 path);
-void write_vec_dat(vec x, s64 path);
 void write_mat(mat x, s64 path);
+
+void print_u64(u64 x, s64 name);
+void print_f64(f64 x, s64 name);
+void print_vec(vec x, s64 name);
+void print_mat(mat x, s64 name);
+#define print(x) _Generic((x),	\
+	u64: print_u64,		\
+	f64: print_f64,		\
+	vec: print_vec,		\
+	mat: print_mat		\
+)(x, #x)
+
+

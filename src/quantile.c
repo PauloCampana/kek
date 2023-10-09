@@ -72,7 +72,7 @@ f64 qlogis(f64 x, f64 location, f64 scale) {
 
 f64 qgamma(f64 x, f64 shape, f64 rate);
 f64 qchisq(f64 x, f64 df);
-f64 qF(f64 x, f64 df1, f64 df2);
+f64 qf(f64 x, f64 df1, f64 df2);
 f64 qbeta(f64 x, f64 shape1, f64 shape2);
 
 f64 qnorm(f64 x, f64 mean, f64 sd) {
