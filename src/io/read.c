@@ -1,4 +1,4 @@
-#include "../kek.h"
+#include "io.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -22,7 +22,7 @@ mat read_mat(s64 path) {
 		u64 signal = fscanf(csv, "\n%[^,;\t\n],", x.colnames[j]);
 		if (signal != 1) exit(1);
 	}
-	c64 buffer[64];
+	c64 buffer;
 	for (u64 i = 0; i < nrow; i++) {
 		sprintf(x.rownames[i], "%llu", i);
 		for (u64 j = 0; j < ncol; j++) {

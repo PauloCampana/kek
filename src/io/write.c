@@ -1,4 +1,4 @@
-#include "../kek.h"
+#include "io.h"
 #include <stdio.h>
 
 void write_vec(vec x, s64 path) {

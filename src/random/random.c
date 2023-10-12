@@ -1,4 +1,4 @@
-#include "../kek.h"
+#include "random.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -264,7 +264,6 @@ vec rf(u64 n, f64 df1, f64 df2) {
 vec rbeta(u64 n, f64 shape1, f64 shape2) {
 	vec x = rgamma(n, shape1, 1);
 	vec g = rgamma(n, shape2, 1);
-	print(vec_mean(x));
 	for (u64 i = 0; i < n; i++) {
 		x.x[i] /= x.x[i] + g.x[i];
 	}

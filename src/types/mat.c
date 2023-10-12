@@ -1,12 +1,12 @@
-#include "../kek.h"
+#include "types.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
 mat mat_new(u64 nrow, u64 ncol) {
 	vec *x = malloc(ncol * sizeof x[0]);
-	c64 (*colnames)[64] = malloc(ncol * sizeof colnames[0]);
-	c64 (*rownames)[64] = malloc(nrow * sizeof rownames[0]);
+	c64 *colnames = malloc(ncol * sizeof colnames[0]);
+	c64 *rownames = malloc(nrow * sizeof rownames[0]);
 	for (u64 j = 0; j < ncol; j++) {
 		x[j] = vec_new(nrow);
 		memset(colnames[j], 0, 64);

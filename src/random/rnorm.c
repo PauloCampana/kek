@@ -1,4 +1,4 @@
-#include "../kek.h"
+#include "random.h"
 #include <math.h>
 #include <stdlib.h>
 

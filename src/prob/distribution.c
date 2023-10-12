@@ -1,4 +1,4 @@
-#include "../kek.h"
+#include "prob.h"
 #include <math.h>
 
 f64 punif(f64 x, f64 min, f64 max) {

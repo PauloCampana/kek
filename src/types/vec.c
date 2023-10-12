@@ -1,4 +1,4 @@
-#include "../kek.h"
+#include "types.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>

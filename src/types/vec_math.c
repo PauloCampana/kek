@@ -1,4 +1,4 @@
-#include "../kek.h"
+#include "types.h"
 #include <math.h>
 
 vec vec_apply1(vec x, f64 fun(f64)) {

@@ -1,19 +1,29 @@
-SOURCES := $(wildcard src/*.c)
-OBJECTS := $(SOURCES:src/%.c=obj/%.o)
+run:
 COMPILER = clang
 FLAGS = -std=c2x -Wall -Wextra -pedantic -O2
 LIBS = -lm
 
-run: bin
-	@./bin
+SOURCES := $(shell find src -type f -name '*.c')
+OBJECTS := $(addsuffix .o, $(basename $(patsubst src%, build%, $(SOURCES))))
 
-bin: main.c kek.h $(OBJECTS)
+$(foreach s, 								\
+	$(SOURCES), 							\
+	$(foreach o, 							\
+		$(filter %$(basename $(notdir $s)).o, $(OBJECTS)),	\
+		$(eval $o: $s) 						\
+	) 								\
+)
+
+run: build/bin
+	@./build/bin
+
+build/bin: main.c kek.h $(OBJECTS)
 	@$(COMPILER) $(FLAGS) $< -o $@ $(OBJECTS) $(LIBS)
 
-$(OBJECTS): obj/%.o : src/%.c kek.h
-	@mkdir -p obj
+$(OBJECTS):
+	@$(if $(wildcard $(@D)),,mkdir -p $(@D))
 	@$(COMPILER) $(FLAGS) -c $< -o $@
 
 clean:
-	@rm -rf obj
+	@rm -rf build
 	@rm -f bin
