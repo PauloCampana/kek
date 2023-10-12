@@ -54,6 +54,30 @@ f64 vec_cor(vec x1, vec x2) {
 	return num / sqrt(den1 * den2);
 }
 
+f64 vec_skewness(vec x) {
+	f64 xbar = vec_mean(x);
+	f64 sd = vec_sd(x);
+	f64 sum = 0;
+	for (u64 i = 0; i < x.len; i++) {
+		f64 m0 = x.x[i] - xbar;
+		sum += m0 * m0 * m0;
+	}
+	return sum / (x.len * sd * sd * sd);
+}
+
+f64 vec_kutrosis(vec x) {
+	f64 xbar = vec_mean(x);
+	f64 sumsq = 0;
+	f64 sumfo = 0;
+	for (u64 i = 0; i < x.len; i++) {
+		f64 m0 = x.x[i] - xbar;
+		f64 m02 = m0 * m0;
+		sumsq += m02;
+		sumfo += m02 * m02;
+	}
+	return x.len * sumfo / (sumsq * sumsq);
+}
+
 vec mat_col_sum(mat x) {
 	vec sum = vec_new(x.len);
 	for (u64 j = 0; j < x.len; j++) {

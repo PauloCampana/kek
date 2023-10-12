@@ -43,6 +43,7 @@ u64 xoshiro256starstar(void) {
 	seed_[3] = rotl(seed_[3], 45);
 	return result;
 }
+f64 u01(void) {return (xoshiro256starstar() >> 11) * 0x1.0p-53;}
 
 void rjump(void) {
 	u64 jump[] = {
@@ -86,8 +87,8 @@ vec sample_yes_rep(vec x, u64 size) {
 vec sample_no_rep(vec x, u64 size) {
 	vec tmp = vec_new(size);
 	for (u64 i = 0, m = 0; i < x.len; i++) {
-		f64 u01 = (xoshiro256starstar() >> 11) * 0x1.0p-53;
-		if ((x.len - i) * u01 < size - m) tmp.x[m++] = x.x[i];
+		f64 u = u01();
+		if ((x.len - i) * u < size - m) tmp.x[m++] = x.x[i];
 	}
 	vec s = vec_new(size);
 	for (u64 i = 0; i < size; i++) {
@@ -111,8 +112,7 @@ vec runif(u64 n, f64 min, f64 max) {
 	if (seedseed_ == 0) rinit(0);
 	f64 *u = malloc(n * sizeof u[0]);
 	for (u64 i = 0; i < n; i++) {
-		f64 u01 = (xoshiro256starstar() >> 11) * 0x1.0p-53;
-		u[i] = min + (max - min) * u01;
+		u[i] = min + (max - min) * u01();
 	}
 	return (vec) {n, u};
 }
@@ -138,8 +138,9 @@ vec rgeom(u64 n, f64 prob) {
 vec rpois(u64 n, f64 lambda) {
 	f64 *x = malloc(n * sizeof x[0]);
 	vec u = runif(n, 0, 1);
+	f64 e = exp(-lambda);
 	for (u64 i = 0; i < n; i++) {
-		f64 p = exp(-lambda);
+		f64 p = e;
 		f64 F = p;
 		u64 j = 0;
 		for (j = 0; u.x[i] >= F; j++) {
@@ -213,68 +214,62 @@ vec rlogis(u64 n, f64 location, f64 scale) {
 	return x;
 }
 
-// Relation to Exponential: Gamma, Chi-squared, F, beta -----------------------
+// Rejection: Gamma -----------------------------------------------------------
 
-vec rgamma(u64 n, u64 shape, f64 rate) {
+vec rgamma(u64 n, f64 shape, f64 rate) {
+	rinit(0);
 	f64 *x = malloc(n * sizeof x[0]);
+	u64 correct = shape >= 1 ? 1 : 0;
+	if (!correct) shape += 1;
+	f64 d = shape - 1.0 / 3;
+	f64 c = 1 / sqrt(9 * d);
+	f64 u, z, v;
 	for (u64 i = 0; i < n; i++) {
-		vec u = runif(shape, 0, 1);
-		x[i] = 0;
-		for (u64 j = 0; j < shape; j++) {
-			x[i] -= log(u.x[j]);
-		}
-		x[i] /= rate;
-		free(u.x);
+		do {
+			do {
+				z = sqrt(-2 * log(u01())) *
+				cos(2 * M_PI * u01());
+				v = 1 + c * z;
+			} while (v <= 0);
+			v *= v * v;
+			z *= z;
+			u = u01();
+		} while (
+			(u > 1 - 0.0331 * z * z) &&
+			log(u) > 0.5 * z + d * (1 - v + log(v))
+		);
+		if (correct) x[i] = d * v / rate;
+		else x[i] = d * v / rate * pow(u01(), 1 / (shape - 1));
 	}
 	return (vec) {n, x};
 }
 
-vec rchisq(u64 n, u64 df) {
-	f64 *x = malloc(n * sizeof x[0]);
-	for (u64 i = 0; i < n; i++) {
-		vec u = runif(df / 2, 0, 1);
-		x[i] = 0;
-		for (u64 j = 0; j < df / 2; j++) {
-			x[i] -= log(u.x[j]);
-		}
-		x[i] *= 2;
-		free(u.x);
-	}
-	if (df % 2 == 1) {
-		vec z = rnorm(n, 0, 1);
-		for (u64 i = 0; i < n; i++) {
-			x[i] += z.x[i] * z.x[i];
-		}
-		free(z.x);
-	}
-	return (vec) {n, x};
+// Relation to Gamma: Chi-squared, F, Beta ------------------------------------
+
+vec rchisq(u64 n, f64 df) {
+	return rgamma(n, df / 2, 0.5);
 }
 
-vec rf(u64 n, u64 df1, u64 df2) {
+vec rf(u64 n, f64 df1, f64 df2) {
 	vec x = rchisq(n, df1);
 	vec c = rchisq(n, df2);
+	f64 ratio = df1 / df2;
 	for (u64 i = 0; i < n; i++) {
-		x.x[i] /= c.x[i] * df1 / df2;
+		x.x[i] /= c.x[i] * ratio;
 	}
+	free(c.x);
 	return x;
 }
 
-vec rbeta(u64 n, u64 shape1, u64 shape2) {
-	f64 *x = malloc(n * sizeof x[0]);
+vec rbeta(u64 n, f64 shape1, f64 shape2) {
+	vec x = rgamma(n, shape1, 1);
+	vec g = rgamma(n, shape2, 1);
+	print(vec_mean(x));
 	for (u64 i = 0; i < n; i++) {
-		vec u = runif(shape1 + shape2, 0, 1);
-		f64 num = 0;
-		for (u64 j = 0; j < shape1; j++) {
-			num -= log(u.x[j]);
-		}
-		f64 den = num;
-		for (u64 j = shape1; j < shape1 + shape2; j++) {
-			den -= log(u.x[j]);
-		}
-		x[i] = num / den;
-		free(u.x);
+		x.x[i] /= x.x[i] + g.x[i];
 	}
-	return (vec) {n, x};
+	free(g.x);
+	return x;
 }
 
 // Box Muller: Normal ---------------------------------------------------------
@@ -302,13 +297,14 @@ vec rlnorm(u64 n, f64 meanlog, f64 sdlog) {
 	return x;
 }
 
-vec rt(u64 n, u64 df) {
+vec rt(u64 n, f64 df) {
 	if (df == 1) return rcauchy(n, 0, 1);
 	vec x = rnorm(n, 0, 1);
 	vec c = rchisq(n, df);
 	for (u64 i = 0; i < n; i++) {
 		x.x[i] *= sqrt(df / c.x[i]);
 	}
+	free(c.x);
 	return x;
 }
 
@@ -317,10 +313,4 @@ vec rt(u64 n, u64 df) {
  * Poisson is O(n * lambda)
  * Binomial and Negative binomial are O(n * size)
  * No Hypergeometric
- * Gamma, Beta, Chi-squared, F and t need integer shape and df parameters
- * 	Gamma       O(n * shape)
- * 	Beta        O(n * (shape1 + shape2))
- * 	Chi-squared O(n * df)
- * 	F           O(n * (df1 + df2))
- * 	t           O(n * df)
  */

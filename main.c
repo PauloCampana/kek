@@ -1,12 +1,10 @@
 #include "kek.h"
 
+vec rnorm2(u64 n, f64 mean, f64 sd);
 int main(void) {
-	vec x = runif(100, -10, 10);
+	vec x = rnorm2(1e6, 0, 1);
 	print(x);
-
-	vec y = vec_round(x);
-	print(y);
-
+}
 	// stopifnot
 
 	// mat_sort
@@ -21,4 +19,3 @@ int main(void) {
 
 	// which should determine which indices are not 0,
 	// no operation bullshit
-}
