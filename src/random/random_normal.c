@@ -171,48 +171,42 @@ static const unsigned int kn[128] = {
 	0x7c600f1a, 0x7ba90bdc, 0x7a722176, 0x77d664e5,
 };
 
-f64 u01(void);
-u64 xoshiro256starstar(void);
-vec rnorm2(u64 n, f64 mean, f64 sd) {
-	rinit(0);
-	f64 *x = malloc(n * sizeof x[0]);
-	for (u64 i = 0; i < n; i++) {
-		int hz = xoshiro256starstar();
-		u64 iz = hz & 127;
-		if (llabs(hz) < kn[iz]) {
-			x[i] = mean + sd * hz * wn[iz];
+f64 random_normal_single() {
+	int hz = random_u64();
+	int iz = hz & 127;
+	if ((unsigned) abs(hz) < kn[iz]) {
+		return hz * wn[iz];
+	}
+	f64 r = 3.4426198558966521214;
+	f64 x, y;
+	x = hz * wn[iz];
+	if (iz == 0) {
+		do {
+			x = -log(random_f64()) / r;
+			y = -log(random_f64());
+		} while (y + y < x * x);
+		if (hz > 0) {
+			return r + x;
 		} else {
-			f64 r = 3.4426198558966521214;
-			f64 x1, y;
-			f64 tmp;
-			while (1) {
-				x1 = hz * wn[iz];
-				if (iz == 0) {
-					do {
-						x1 = -log(u01()) / r;
-						y = -log(u01());
-					} while (y + y < x1 * x1);
-					if (hz > 0) {
-						tmp = r + x1;
-						break;
-					} else {
-						tmp = -(r + x1);
-						break;
-					}
-				}
-				if (fn[iz] + u01() * (fn[iz - 1] - fn[iz]) < exp(-0.5 * x1 * x1)) {
-					tmp = x1;
-					break;
-				}
-				hz = xoshiro256starstar();
-				iz = hz & 127;
-				if ((u64) labs(hz) < kn[iz]) {
-					tmp = hz * wn[iz];
-					break;
-				}
-			}
-			x[i] = mean + sd * tmp;
+			return -(r + x);
 		}
 	}
-	return (vec) {n, x};
+	if (
+		fn[iz] + random_f64() * (fn[iz - 1] - fn[iz]) <
+		exp(-0.5 * x * x)
+	) {
+		return x;
+	}
+	return random_normal_single();
 }
+
+
+vec random_normal(u64 n, f64 mean, f64 sd) {
+	random_seed(0);
+	vec normal = vec_new(n);
+	for (u64 i = 0; i < n; i++) {
+		normal.x[i] = mean + sd * random_normal_single();
+	}
+	return normal;
+}
+

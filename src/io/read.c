@@ -24,7 +24,7 @@ mat read_mat(s64 path) {
 	}
 	c64 buffer;
 	for (u64 i = 0; i < nrow; i++) {
-		sprintf(x.rownames[i], "%llu", i);
+		snprintf(x.rownames[i], sizeof x.rownames[0], "%llu", i);
 		for (u64 j = 0; j < ncol; j++) {
 			u64 signal = fscanf(csv, "\n%[^,;\t\n],", buffer);
 			if (signal != 1) exit(1);
